@@ -1,4 +1,12 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Pinned so the emitted tree is always dist/main.js. Without it TypeScript
+    // infers the root from the widest common directory of the compiled files,
+    // which silently becomes the project root (and dist/src/main.js) as soon as
+    // a file outside src/ is pulled in.
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
