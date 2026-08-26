@@ -55,8 +55,11 @@ export default function RegistrationForm() {
                     <label htmlFor="phoneNumber">Phone Number<span className="text-red-500">*</span></label>
                     <input type="text" id="phoneNumber" name="phoneNumber" className="w-full p-2 border border-gray-300 rounded-md" value={regForm.phoneNumber} onChange={handleChange} />
                 </div>
-                <div className="flex flex-col gap-2 mb-1">
-                    <label htmlFor="hasCar">Has Car</label>
+                <div className="flex flex-row gap-2 mb-1">
+                    <label htmlFor="hasCar">รถตัวเอง</label>
+                    <input type="checkbox" id="hasCar" name="hasCar" checked={regForm.hasCar} onChange={handleChange} />
+
+                    <label htmlFor="noCar">ไม่มีรถ</label>
                     <input type="checkbox" id="hasCar" name="hasCar" checked={regForm.hasCar} onChange={handleChange} />
                 </div>
                 
