@@ -36,9 +36,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = config.get<number>('PORT', 3001);
-  await app.listen(port);
-
-  logger.log(`API listening on http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  
+  logger.log(`API listening on port ${port}`);  
   logger.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
