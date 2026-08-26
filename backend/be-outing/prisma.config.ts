@@ -8,6 +8,8 @@ export default defineConfig({
     seed: 'tsx prisma/seed.ts',
   },
   datasource: {
+    // Pooled Neon URL for queries. Migrations use DIRECT_URL (no PgBouncer).
     url: process.env['DATABASE_URL'],
+    directUrl: process.env['DIRECT_URL'],
   },
 });
