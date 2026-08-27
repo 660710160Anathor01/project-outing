@@ -1,5 +1,5 @@
 "use client";
-
+import { Copy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAllRegistrations } from "../../src/_lib/api/registrationService";
@@ -13,6 +13,7 @@ import { Registration } from "@/src/_lib/api/registration-type";
 import { useState } from "react";
 import Loading from "../loading";
 import { Button } from "@/src/_component/button";
+import { Dialog, DialogHeader, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/src/_component/dialog";
 
 type TravelOption =
   | "SELF_DRIVE"
@@ -231,6 +232,27 @@ function RegistrationTable({ registrations }: { registrations: Registration[] })
   );
 }
 
+function SentFormDialog({ handleSentForm }: { handleSentForm: () => void }) {
+  return (
+    <Dialog >
+      <DialogTrigger>
+      <Button>Sent Form</Button>
+      </DialogTrigger>
+      <DialogContent className="text-black">
+        <DialogHeader>
+          <DialogTitle>Copy Form URL</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="flex flex-row gap-2">
+          <p className=" text-gray-500">Form URL: {window.location.origin}/create</p>
+          <Button onClick={() => {
+            handleSentForm();
+          }} className="w-fit" variant="ghost"><Copy className="w-4 h-4" /></Button>
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function Dashboard() {
   const [filter, setFilter] = useState<Filter>(emptyFilter());
 
@@ -324,16 +346,14 @@ export function Dashboard() {
     )[0] as string;
 
   const handleSentForm = () => {
-    window.navigator.clipboard.writeText("/create");
+    window.navigator.clipboard.writeText(window.location.origin + "/create");
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-4 items-center justify-between">
         <h1 className="text-2xl font-bold text-black">Registration Dashboard</h1>
-        <Button onClick={() => {
-          handleSentForm();
-        }}>Sent Form</Button>
+        <SentFormDialog handleSentForm={handleSentForm} />
       </div>
       
       <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>

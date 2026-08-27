@@ -1,7 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  Bus,
+  Car,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Plus,
+  Trash2,
+  UserRound,
+  Users,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -12,9 +26,19 @@ import {
 } from "../../../src/_component/card-template";
 import { Button } from "../../../src/_component/button";
 import { createRegistration } from "../../../src/_lib/api/registrationService";
-import { useRouter } from "next/navigation";
+import { ApiError } from "../../../src/_lib/api/registration-type";
+import {
+  ErrorSummary,
+  Field,
+  FormSection,
+  RadioCardGroup,
+  TextArea,
+  TextInput,
+  type RadioCardOption,
+} from "./form-fields";
 
 type Companion = {
+  id: string;
   name: string;
   phone: string;
   relationship: string;
@@ -26,13 +50,72 @@ type RegistrationFormData = {
   lineId: string;
   locationId: string;
   companions: Companion[];
-  travelOption: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
+  travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  carShare?: boolean;
+  emptySeats?: number;
+  address?: string;
   note: string;
 };
 
 type FormErrors = Record<string, string>;
 
+const MAX_COMPANIONS = 10;
+const MAX_NOTE_LENGTH = 1000;
+const PHONE_REGEX = /^0\d{8,9}$/;
+
+const LOCATIONS: RadioCardOption[] = [
+  {
+    value: "1",
+    label: "Thann Pool Villa ",
+    description:
+      "A private luxury pool villa surrounded by nature, offering panoramic sunset and Phaya Yen mountain views.",
+    image:
+      "https://chillpainai.com/storage/scoop/14639/3.jpg",
+  },
+  {
+    value: "2",
+    label: "The Scandic Khao yai",
+    description:
+      "The Scandic Khao Yai offers a cozy Scandinavian-style stay surrounded by the beautiful mountains of Khao Yai.",
+    image:
+      "https://www.chillpainai.com/src/wewakeup/scoop/images/e8e4b47de657ffbe94b9874e17952b3e3af26a4b.jpg",
+  },
+  {
+    value: "3",
+    label: "La Vallee Khaoyai",
+    description: "La Vallee Khaoyai offers a modern private villa with a relaxed atmosphere, featuring 3 bedrooms, a private pool with jacuzzi, living room, and fully equipped kitchen.",
+    image:
+      "https://www.chillpainai.com/src/wewakeup/scoop/images/f7d5b3e5fc308afd8ea685b454bc288760cb648b.jpg",
+  },
+];
+
+
+const TRAVEL_OPTIONS: RadioCardOption[] = [
+  {
+    value: "SELF_DRIVE",
+    label: "Self drive",
+    description: "I'll drive my own car to the destination.",
+    icon: Car,
+  },
+  {
+    value: "CAR_SHARE",
+    label: "Car share",
+    description: "Happy to share a ride with other attendees.",
+    icon: Users,
+  },
+];
+
+const FIELD_FOCUS_ORDER = [
+  "locationId",
+  "name",
+  "phone",
+  "lineId",
+  "travelOption",
+  "note",
+] as const;
+
 const emptyCompanion = (): Companion => ({
+  id: crypto.randomUUID(),
   name: "",
   phone: "",
   relationship: "",
@@ -45,43 +128,78 @@ const emptyForm = (): RegistrationFormData => ({
   locationId: "",
   companions: [],
   travelOption: "SELF_DRIVE",
+  carShare: false,
+  emptySeats: 0,
+  address: "",
   note: "",
 });
 
-const PHONE_REGEX = /^[0-9]{9,10}$/;
+function normalizePhone(value: string): string {
+  const compact = value.replace(/[\s\-().]/g, "");
 
-const validateForm = (form: RegistrationFormData): FormErrors => {
+  if (compact.startsWith("+66")) {
+    return `0${compact.slice(3)}`;
+  }
+  if (compact.startsWith("66") && compact.length === 11) {
+    return `0${compact.slice(2)}`;
+  }
+  return compact;
+}
+
+function isValidPhone(value: string): boolean {
+  return PHONE_REGEX.test(normalizePhone(value.trim()));
+}
+
+function validateForm(form: RegistrationFormData): FormErrors {
   const errors: FormErrors = {};
 
-  if (!form.name.trim()) errors.name = "Name is required";
+  if (!form.locationId) {
+    errors.locationId = "Pick a destination to continue";
+  }
 
-  if (!form.locationId) errors.locationId = "Location is required";
+  const trimmedName = form.name.trim();
+  if (!trimmedName) {
+    errors.name = "Name is required";
+  } else if (trimmedName.length < 2 || trimmedName.length > 120) {
+    errors.name = "Name must be between 2 and 120 characters";
+  }
 
   if (!form.phone.trim()) {
     errors.phone = "Phone number is required";
-  } else if (!PHONE_REGEX.test(form.phone.trim())) {
-    errors.phone = "Enter a valid phone number";
+  } else if (!isValidPhone(form.phone)) {
+    errors.phone = "Enter a valid Thai phone number, e.g. 0812345678";
   }
 
-  form.companions.forEach((companion, index) => {
-    if (!companion.name.trim()) {
-      errors[`companion-${index}-name`] = "Name is required";
+  form.companions.forEach((companion) => {
+    const nameKey = `companion-${companion.id}-name`;
+    const phoneKey = `companion-${companion.id}-phone`;
+    const trimmedCompanionName = companion.name.trim();
+
+    if (!trimmedCompanionName) {
+      errors[nameKey] = "Companion name is required";
+    } else if (
+      trimmedCompanionName.length < 2 ||
+      trimmedCompanionName.length > 120
+    ) {
+      errors[nameKey] = "Name must be between 2 and 120 characters";
     }
 
-    if (!companion.phone.trim()) {
-      errors[`companion-${index}-phone`] = "Phone number is required";
-    } else if (!PHONE_REGEX.test(companion.phone.trim())) {
-      errors[`companion-${index}-phone`] = "Enter a valid phone number";
+    if (companion.phone.trim() && !isValidPhone(companion.phone)) {
+      errors[phoneKey] = "Enter a valid Thai phone number, e.g. 0812345678";
     }
   });
 
-  return errors;
-};
+  if (form.note.length > MAX_NOTE_LENGTH) {
+    errors.note = `Note must be ${MAX_NOTE_LENGTH} characters or fewer`;
+  }
 
-// Drops any key from an errors object whose prefix matches (used when
-// companion indices shift after add/remove, so stale errors don't linger
-// under the wrong row).
-const clearErrorsWithPrefix = (errors: FormErrors, prefix: string): FormErrors => {
+  return errors;
+}
+
+const clearErrorsWithPrefix = (
+  errors: FormErrors,
+  prefix: string,
+): FormErrors => {
   const next: FormErrors = {};
   for (const key of Object.keys(errors)) {
     if (!key.startsWith(prefix)) next[key] = errors[key];
@@ -96,99 +214,172 @@ const clearError = (errors: FormErrors, key: string): FormErrors => {
   return next;
 };
 
+function getFirstErrorKey(
+  errors: FormErrors,
+  form: RegistrationFormData,
+): string | null {
+  for (const key of FIELD_FOCUS_ORDER) {
+    if (errors[key]) return key;
+  }
+
+  for (const companion of form.companions) {
+    const nameKey = `companion-${companion.id}-name`;
+    if (errors[nameKey]) return nameKey;
+
+    const phoneKey = `companion-${companion.id}-phone`;
+    if (errors[phoneKey]) return phoneKey;
+  }
+
+  return null;
+}
+
+function focusField(fieldKey: string, form: RegistrationFormData) {
+  if (fieldKey === "locationId") {
+    document.getElementById(`locationId-${form.locationId || LOCATIONS[0].value}`)?.focus();
+    return;
+  }
+
+  if (fieldKey === "travelOption") {
+    document.getElementById(`travelOption-${form.travelOption}`)?.focus();
+    return;
+  }
+
+  document.getElementById(fieldKey)?.focus();
+}
+
 export default function RegistrationForm() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [regForm, setRegForm] = useState<RegistrationFormData>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  const validateAndSetField = useCallback(
+    (fieldKey: string, form: RegistrationFormData) => {
+      const allErrors = validateForm(form);
+      setErrors((prev) => {
+        if (allErrors[fieldKey]) {
+          return { ...prev, [fieldKey]: allErrors[fieldKey] };
+        }
+        return clearError(prev, fieldKey);
+      });
+    },
+    [],
+  );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
 
-    setRegForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setErrors((prev) => clearError(prev, name));
-  };
-
-  const handleFollowerChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const count = Math.max(0, parseInt(e.target.value, 10) || 0);
-
     setRegForm((prev) => {
-      const companions = [...prev.companions];
+      const next = { ...prev, [name]: value };
 
-      if (count > companions.length) {
-        while (companions.length < count) {
-          companions.push(emptyCompanion());
-        }
+      if (touched.has(name) || submitAttempted) {
+        validateAndSetField(name, next);
       } else {
-        companions.length = count;
+        setErrors((prevErrors) => clearError(prevErrors, name));
       }
 
-      return {
-        ...prev,
-        companions,
-      };
+      return next;
     });
-    setErrors((prev) => clearErrorsWithPrefix(prev, "companion-"));
+  };
+
+  const handleBlur = (fieldKey: string) => {
+    setTouched((prev) => new Set(prev).add(fieldKey));
+    validateAndSetField(fieldKey, regForm);
   };
 
   const handleCompanionChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    index: number
+    companionId: string,
   ) => {
     const { name, value } = e.target;
+    const fieldKey = `companion-${companionId}-${name}`;
 
     setRegForm((prev) => {
-      const companions = [...prev.companions];
-
-      companions[index] = {
-        ...companions[index],
-        [name]: value,
-      };
-
-      return {
+      const next = {
         ...prev,
-        companions,
+        companions: prev.companions.map((companion) =>
+          companion.id === companionId
+            ? { ...companion, [name]: value }
+            : companion,
+        ),
       };
+
+      if (touched.has(fieldKey) || submitAttempted) {
+        validateAndSetField(fieldKey, next);
+      } else {
+        setErrors((prevErrors) => clearError(prevErrors, fieldKey));
+      }
+
+      return next;
     });
-    setErrors((prev) => clearError(prev, `companion-${index}-${name}`));
   };
 
-  const handleRemoveCompanion = (index: number) => {
-    setRegForm((prev) => {
-      const companions = [...prev.companions];
-      companions.splice(index, 1);
+  const handleCompanionBlur = (companionId: string, fieldName: string) => {
+    const fieldKey = `companion-${companionId}-${fieldName}`;
+    setTouched((prev) => new Set(prev).add(fieldKey));
+    validateAndSetField(fieldKey, regForm);
+  };
 
-      return {
-        ...prev,
-        companions,
-      };
-    });
-    setErrors((prev) => clearErrorsWithPrefix(prev, "companion-"));
+  const handleAddCompanion = () => {
+    if (regForm.companions.length >= MAX_COMPANIONS) return;
+
+    setRegForm((prev) => ({
+      ...prev,
+      companions: [...prev.companions, emptyCompanion()],
+    }));
+  };
+
+  const handleRemoveCompanion = (companionId: string) => {
+    setRegForm((prev) => ({
+      ...prev,
+      companions: prev.companions.filter(
+        (companion) => companion.id !== companionId,
+      ),
+    }));
+    setErrors((prev) => clearErrorsWithPrefix(prev, `companion-${companionId}-`));
   };
 
   const {
     mutate: createRegistrationMutation,
     isPending,
     error,
-    isSuccess,
     reset,
   } = useMutation({
-    mutationFn: () => createRegistration(regForm),
+    mutationFn: () =>
+      createRegistration({
+        name: regForm.name.trim(),
+        phone: regForm.phone.trim(),
+        lineId: regForm.lineId.trim(),
+        locationId: regForm.locationId,
+        travelOption: regForm.travelOption,
+        note: regForm.note.trim() || undefined,
+        companions: regForm.companions.map(({ name, phone, relationship }) => ({
+          name: name.trim(),
+          ...(phone.trim() ? { phone: phone.trim() } : {}),
+          ...(relationship.trim() ? { relationship: relationship.trim() } : {}),
+        })),
+      }),
     onSuccess: () => {
       router.push("/submitted");
     },
   });
 
   const handleSubmit = () => {
+    setSubmitAttempted(true);
     const newErrors = validateForm(regForm);
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstKey = getFirstErrorKey(newErrors, regForm);
+      if (firstKey) {
+        requestAnimationFrame(() => focusField(firstKey, regForm));
+      }
+      return;
+    }
 
     reset();
     createRegistrationMutation();
@@ -197,250 +388,434 @@ export default function RegistrationForm() {
   const handleClear = () => {
     reset();
     setErrors({});
+    setTouched(new Set());
+    setSubmitAttempted(false);
     setRegForm(emptyForm());
   };
 
-  // Shared classes: red border when the field has an error, gray otherwise.
-  const inputClass = (key: string) =>
-    `w-full rounded-md border p-2 ${
-      errors[key] ? "border-red-500 focus:border-red-500" : "border-gray-300"
-    }`;
+  const visibleErrors = submitAttempted
+    ? Object.values(errors)
+    : Array.from(touched)
+        .map((key) => errors[key])
+        .filter(Boolean);
 
-  const FieldError = ({ fieldKey }: { fieldKey: string }) =>
-    errors[fieldKey] ? (
-      <span className="text-sm text-red-500">{errors[fieldKey]}</span>
-    ) : null;
+  const serverMessages =
+    error instanceof ApiError
+      ? error.isRateLimited
+        ? ["Too many requests. Please wait a moment and try again."]
+        : error.messages
+      : error
+        ? [error.message]
+        : [];
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 text-black">
-      <Card>
-        <CardHeader>
-          <CardTitle>Registration Form</CardTitle>
-          <CardDescription>
-            Register for the Khao Yai trip and let us know your travel
-            preferences.
-          </CardDescription>
-        </CardHeader>
+    <Card className="w-full rounded-xl border-line bg-card text-card-foreground shadow-sm">
+      <CardHeader className="space-y-2 pb-4">
+        <CardTitle className="text-2xl font-semibold tracking-tight">
+          Join the Khao Yai trip
+        </CardTitle>
+        <CardDescription className="text-base text-muted">
+          Pick your destination and tell us how you&apos;ll get there. Takes
+          about a minute.
+        </CardDescription>
+      </CardHeader>
 
-        <CardContent>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="flex flex-col gap-2"
-            noValidate
-          >
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="name">
-                Name <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Eg. Many Phrom"
-                className={inputClass("name")}
-                value={regForm.name}
-                onChange={handleChange}
-              />
-              <FieldError fieldKey="name" />
-            </div>
-
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="locationId">
-                Location <span className="text-red-500">*</span>
-              </label>
-
-              <select
-                id="locationId"
-                name="locationId"
-                className={inputClass("locationId")}
-                value={regForm.locationId}
-                onChange={handleChange}
-              >
-                <option value="">Select location</option>
-                <option value="1">Khao Yai National Park</option>
-                <option value="2">Toscana Valley</option>
-                <option value="3">PB Valley Khao Yai Winery</option>
-              </select>
-              <FieldError fieldKey="locationId" />
-            </div>
-
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="follower">Follower</label>
-
-              <input
-                type="number"
-                id="follower"
-                name="follower"
-                min={0}
-                value={regForm.companions.length}
-                onChange={handleFollowerChange}
-                className="w-full rounded-md border border-gray-300 p-2"
-              />
-
-              {regForm.companions.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  {regForm.companions.map((companion, index) => (
-                    <div
-                      key={index}
-                      className="mb-1 flex flex-col gap-2 rounded-md border border-gray-200 p-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">
-                          Companion {index + 1}{" "}
-                          <span className="text-red-500">*</span>
-                        </span>
-
-                        <button
-                          type="button"
-                          className="rounded-md bg-red-500 px-2 py-1 text-sm text-white"
-                          onClick={() => handleRemoveCompanion(index)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-
-                      <label htmlFor={`companion-${index}-name`}>
-                        Name <span className="text-red-500">*</span>
-                      </label>
-
-                      <input
-                        type="text"
-                        id={`companion-${index}-name`}
-                        name="name"
-                        placeholder="Eg. Many Phrom"
-                        className={inputClass(`companion-${index}-name`)}
-                        value={companion.name}
-                        onChange={(e) =>
-                          handleCompanionChange(e, index)
-                        }
-                      />
-                      <FieldError fieldKey={`companion-${index}-name`} />
-
-                      <label htmlFor={`companion-${index}-phone`}>
-                        Phone <span className="text-red-500">*</span>
-                      </label>
-
-                      <input
-                        type="text"
-                        id={`companion-${index}-phone`}
-                        name="phone"
-                        placeholder="Eg. 0812345678"
-                        className={inputClass(`companion-${index}-phone`)}
-                        value={companion.phone}
-                        onChange={(e) =>
-                          handleCompanionChange(e, index)
-                        }
-                      />
-                      <FieldError fieldKey={`companion-${index}-phone`} />
-                    </div>
-                  ))}
-                </div>
+      <CardContent>
+        <form
+          ref={formRef}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="flex flex-col gap-8"
+          noValidate
+        >
+          {(visibleErrors.length > 0 || serverMessages.length > 0) && (
+            <div className="flex flex-col gap-3">
+              {visibleErrors.length > 0 && (
+                <ErrorSummary errors={[...new Set(visibleErrors)]} />
+              )}
+              {serverMessages.length > 0 && (
+                <ErrorSummary errors={serverMessages} />
               )}
             </div>
+          )}
 
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="lineId">
-                Line <span className="text-sm text-gray-500">(Optional)</span>
-              </label>
+          <FormSection
+            title="Pool Villa"
+            description="Where would you like to stay?"
+          >
+            <RadioCardGroup
+              legend="Choose a pool villa"
+              name="locationId"
+              value={regForm.locationId}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              horizontal
+              onChange={(value) => {
+                setRegForm((prev) => {
+                  const next = { ...prev, locationId: value };
 
-              <input
-                type="text"
-                id="lineId"
-                name="lineId"
-                className="w-full rounded-md border border-gray-300 p-2"
-                value={regForm.lineId}
-                onChange={handleChange}
-              />
-            </div>
+                  if (touched.has("locationId") || submitAttempted) {
+                    validateAndSetField("locationId", next);
+                  } else {
+                    setErrors((prevErrors) =>
+                      clearError(prevErrors, "locationId"),
+                    );
+                  }
 
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="phone">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
+                  return next;
+                });
+              }}
+              options={LOCATIONS}
+              required
+              error={errors.locationId}
+            />
+          </FormSection>
 
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                placeholder="Eg. 0812345678"
-                className={inputClass("phone")}
-                value={regForm.phone}
-                onChange={handleChange}
-              />
-              <FieldError fieldKey="phone" />
-            </div>
+          <FormSection
+            title="Your details"
+            description="We'll use this to confirm your spot."
+          >
+            <Field
+              id="name"
+              label="Full name"
+              required
+              error={errors.name}
+            >
+              {(describedBy) => (
+                <TextInput
+                  id="name"
+                  name="name"
+                  type="text"
+                  icon={UserRound}
+                  placeholder="e.g. Many Phrom"
+                  value={regForm.name}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("name")}
+                  error={Boolean(errors.name)}
+                  describedBy={describedBy}
+                  autoComplete="name"
+                />
+              )}
+            </Field>
 
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="travelOption">Travel Option</label>
+            <Field
+              id="phone"
+              label="Phone number"
+              required
+              hint="Thai mobile or landline, e.g. 0812345678"
+              error={errors.phone}
+            >
+              {(describedBy) => (
+                <TextInput
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  icon={Phone}
+                  placeholder="0812345678"
+                  value={regForm.phone}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("phone")}
+                  error={Boolean(errors.phone)}
+                  describedBy={describedBy}
+                  autoComplete="tel"
+                  inputMode="tel"
+                />
+              )}
+            </Field>
 
-              <select
-                id="travelOption"
-                name="travelOption"
-                className="w-full rounded-md border border-gray-300 p-2"
-                value={regForm.travelOption}
-                onChange={handleChange}
-              >
-                <option value="SELF_DRIVE">Self Drive</option>
-                <option value="CAR_SHARE">Car Share</option>
-                <option value="PUBLIC_TRANSPORT">Public Transport</option>
-              </select>
-            </div>
+            <Field id="lineId" label="LINE ID" optional>
+              {(describedBy) => (
+                <TextInput
+                  id="lineId"
+                  name="lineId"
+                  type="text"
+                  icon={MessageCircle}
+                  placeholder="Your LINE ID for quick updates"
+                  value={regForm.lineId}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("lineId")}
+                  describedBy={describedBy}
+                />
+              )}
+            </Field>
+          </FormSection>
 
-            <div className="mb-1 flex flex-col gap-2">
-              <label htmlFor="note">Note <span className="text-sm text-gray-500">(Optional)</span></label>
+          <FormSection
+            title="Getting there"
+            description="How do you plan to travel?"
+          >
+            <RadioCardGroup
+              legend="Travel option"
+              name="travelOption"
+              value={regForm.travelOption}
+              onChange={(value) =>
+                setRegForm((prev) => ({
+                  ...prev,
+                  travelOption: value as RegistrationFormData["travelOption"],
+                  carShare: false,
+                  emptySeats: 0,
+                  address: "",
+                }))
+              }
+              options={TRAVEL_OPTIONS}
+            />
+            {regForm.travelOption === "SELF_DRIVE" && (
+              <div className="flex flex-row gap-4 items-center">
+                <label htmlFor="carShare">Able to take other people?</label>
+                <input
+                  id="carShare"
+                  name="carShare"
+                  type="checkbox"
+                  checked={regForm.carShare}
+                  onChange={() => setRegForm((prev) => ({ ...prev, carShare: !prev.carShare }))}
+                />
+                </div>
+              )}
+              {regForm.carShare && regForm.travelOption === "SELF_DRIVE" && (
+                <div>
+                <Field
+                  id="emptySeats"
+                  label="Empty seats"
+                  optional
+                >
+                  {(describedBy) => (
+                    <TextInput
+                      id="emptySeats"
+                      name="emptySeats"
+                      type="number"
+                      placeholder="e.g. 1"
+                      defaultValue={1}
+                      onChange={handleChange}
+                      onBlur={() => handleBlur("emptySeats")}
+                      error={Boolean(errors.emptySeats)}
+                      describedBy={describedBy}
+                    />
+                  )}
+                </Field>
+                <Field
+                  id="address"
+                  label="Address"
+                  optional
+                >
+                  {(describedBy) => (
+                    <TextInput
+                      id="address"
+                      name="address"
+                      type="number"
+                      placeholder="e.g. 123 Main St, Anytown, USA"
+                      onChange={handleChange}
+                      onBlur={() => handleBlur("address")}
+                      error={Boolean(errors.address)}
+                      describedBy={describedBy}
+                    />
+                  )}
+                </Field>
+                </div>
+              )}
+            </FormSection>
+          <FormSection
+            title="Companions"
+            description="Bringing anyone along? Add them here."
+          >
+            {regForm.companions.length === 0 ? (
+              <p className="text-sm text-muted">
+                Traveling solo? You can skip this section.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {regForm.companions.map((companion, index) => (
+                  <div
+                    key={companion.id}
+                    className="rounded-[10px] border border-line bg-surface/50 p-4"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-medium text-card-foreground">
+                        Companion {index + 1}
+                      </h3>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCompanion(companion.id)}
+                        className="text-danger hover:bg-red-50 hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Remove
+                      </Button>
+                    </div>
 
-              <textarea
-                id="note"
-                name="note"
-                placeholder="(Optional)"
-                className="w-full rounded-md border border-gray-300 p-2"
-                value={regForm.note}
-                onChange={(e) =>
-                  setRegForm((prev) => ({
-                    ...prev,
-                    note: e.target.value,
-                  }))
-                }
-              />
-            </div>
+                    <div className="flex flex-col gap-4">
+                      <Field
+                        id={`companion-${companion.id}-name`}
+                        label="Full name"
+                        required
+                        error={errors[`companion-${companion.id}-name`]}
+                      >
+                        {(describedBy) => (
+                          <TextInput
+                            id={`companion-${companion.id}-name`}
+                            name="name"
+                            type="text"
+                            placeholder="e.g. Jane Doe"
+                            value={companion.name}
+                            onChange={(e) =>
+                              handleCompanionChange(e, companion.id)
+                            }
+                            onBlur={() =>
+                              handleCompanionBlur(companion.id, "name")
+                            }
+                            error={Boolean(
+                              errors[`companion-${companion.id}-name`],
+                            )}
+                            describedBy={describedBy}
+                          />
+                        )}
+                      </Field>
 
-            {error && (
-              <div className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
-                Error: {error.message}
+                      <Field
+                        id={`companion-${companion.id}-phone`}
+                        label="Phone number"
+                        optional
+                        hint="Optional — helps us reach them if needed"
+                        error={errors[`companion-${companion.id}-phone`]}
+                      >
+                        {(describedBy) => (
+                          <TextInput
+                            id={`companion-${companion.id}-phone`}
+                            name="phone"
+                            type="tel"
+                            icon={Phone}
+                            placeholder="0812345678"
+                            value={companion.phone}
+                            onChange={(e) =>
+                              handleCompanionChange(e, companion.id)
+                            }
+                            onBlur={() =>
+                              handleCompanionBlur(companion.id, "phone")
+                            }
+                            error={Boolean(
+                              errors[`companion-${companion.id}-phone`],
+                            )}
+                            describedBy={describedBy}
+                            inputMode="tel"
+                          />
+                        )}
+                      </Field>
+
+                      <Field
+                        id={`companion-${companion.id}-relationship`}
+                        label="Relationship"
+                        optional
+                      >
+                        {(describedBy) => (
+                          <TextInput
+                            id={`companion-${companion.id}-relationship`}
+                            name="relationship"
+                            type="text"
+                            placeholder="e.g. Friend, partner, family"
+                            value={companion.relationship}
+                            onChange={(e) =>
+                              handleCompanionChange(e, companion.id)
+                            }
+                            describedBy={describedBy}
+                          />
+                        )}
+                      </Field>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {isSuccess && (
-              <div className="mt-2 rounded-md bg-green-50 p-3 text-sm text-green-600">
-                Registration successful
-              </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={handleAddCompanion}
+              disabled={regForm.companions.length >= MAX_COMPANIONS}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add companion
+              {regForm.companions.length >= MAX_COMPANIONS && (
+                <span className="sr-only"> — maximum of {MAX_COMPANIONS} reached</span>
+              )}
+            </Button>
+            {regForm.companions.length >= MAX_COMPANIONS && (
+              <p className="text-sm text-muted">
+                You can add up to {MAX_COMPANIONS} companions.
+              </p>
             )}
+          </FormSection>
 
-            <CardFooter className="mt-4 flex justify-end gap-2 p-0 pt-2">
-              <Button
-                variant="secondary"
-                size="md"
-                className="rounded-md bg-gray-500 p-2 text-white" onClick={handleClear}
-              >
-                Clear
-              </Button>
+          <FormSection title="Anything we should know?">
+            <Field
+              id="note"
+              label="Notes"
+              optional
+              hint="Dietary needs, accessibility requests, or other details"
+              error={errors.note}
+            >
+              {(describedBy) => (
+                <>
+                  <TextArea
+                    id="note"
+                    name="note"
+                    rows={3}
+                    placeholder="Let us know if there's anything we should prepare for"
+                    value={regForm.note}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("note")}
+                    error={Boolean(errors.note)}
+                    describedBy={describedBy}
+                    maxLength={MAX_NOTE_LENGTH}
+                  />
+                  <p
+                    className={`text-right text-xs ${
+                      regForm.note.length >= MAX_NOTE_LENGTH
+                        ? "text-danger"
+                        : "text-muted"
+                    }`}
+                    aria-live="polite"
+                  >
+                    {regForm.note.length}/{MAX_NOTE_LENGTH}
+                  </p>
+                </>
+              )}
+            </Field>
+          </FormSection>
 
-              <Button
-                variant="primary"
-                size="md"
-                className="rounded-md bg-blue-500 p-2 text-white"
-                disabled={isPending}
-              >
-                {isPending ? "Submitting..." : "Submit"}
-              </Button>
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" size="md" onClick={handleClear}>
+              Clear form
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              disabled={isPending}
+              aria-busy={isPending}
+              className="w-full sm:w-auto"
+            >
+              {isPending ? (
+                <>
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                  Submitting…
+                </>
+              ) : (
+                <>
+                  Complete registration
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

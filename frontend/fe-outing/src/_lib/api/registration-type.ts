@@ -1,33 +1,49 @@
 export type RegistrationStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
 
 /** Dates arrive as ISO strings over JSON, not Date objects. */
-export type Location = {
-  id: string;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+// export type Location = {
+//   id: string;
+//   name: string;
+//   description: string | null;
+//   imageUrl: string | null;
+//   startDate: string | null;
+//   endDate: string | null;
+//   createdAt: string;
+//   updatedAt: string;
+// };
 
 export type Companion = {
   id: string;
   registrationId: string;
   fullName: string;
+  lineId: string | null;
   phone: string | null;
-  relationship: string | null;
+  relationship?: string | null;
   createdAt: string;
 };
+
+export type Location = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  beds: number;
+  residentCapacity: number;
+  carparkCapacity: number;
+  imageUrl: string | null;
+}
 
 export type Registration = {
   name: string;
   phone: string;
   lineId: string;
+
   locationId: string;
   companions?: CompanionInput[];
-  travelOption: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
+  travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  carShare?: boolean;
+  emptySeats?: number;
+  address?: string;
   note?: string;
   createdAt: string;
   updatedAt: string;
@@ -45,7 +61,9 @@ export type CreateRegistrationInput = {
   lineId: string;
   locationId: string;
   companions?: CompanionInput[];
-  travelOption: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
+  travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  carShare?: boolean;
+  emptySeats?: number;
   note?: string;
 };
 

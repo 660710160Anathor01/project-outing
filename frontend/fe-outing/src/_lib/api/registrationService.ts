@@ -6,7 +6,7 @@ import {
     UpdateRegistrationInput 
 } from "./registration-type";
 
-const BASE_URL = process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL ?? "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL;
 
 function toMessages(body: unknown, status: number): string[] {
     if (body && typeof body === "object" && "message" in body) {
