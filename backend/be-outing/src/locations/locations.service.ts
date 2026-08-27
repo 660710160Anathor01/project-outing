@@ -1,22 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+// import { Injectable, NotFoundException } from '@nestjs/common';
+// import { PrismaService } from '../prisma/prisma.service';
 
-@Injectable()
-export class LocationsService {
-  constructor(private readonly prisma: PrismaService) {}
+// @Injectable()
+// export class LocationsService {
+//   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.location.findMany({
-      orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
-    });
-  }
+//   findAll() {
+//     return this.prisma.location.findMany({
+//       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
+//     });
+//   }
 
-  async findOne(id: string) {
-    const location = await this.prisma.location.findUnique({ where: { id } });
+//   async findOne(id: string) {
+//     const location = await this.prisma.location.findUnique({ where: { id } });
 
-    if (!location) {
-      throw new NotFoundException(`Destination ${id} was not found`);
-    }
-    return location;
-  }
-}
+//     if (!location) {
+//       throw new NotFoundException(`Destination ${id} was not found`);
+//     }
+//     return location;
+//   }
+// }

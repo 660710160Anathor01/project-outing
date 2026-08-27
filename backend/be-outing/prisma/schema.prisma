@@ -1,5 +1,4 @@
 // Company Outing Registration - data model
-// Docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client"
@@ -10,74 +9,24 @@ datasource db {
   provider = "postgresql"
 }
 
-enum RegistrationStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-}
-
-model Location {
-  id          String    @id @default(uuid()) @db.Uuid
-  name        String    @unique
-  description String?
-  imageUrl    String?
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  registrations Registration[]
-
-  @@index([startDate])
-}
-
-model Registration {
-  id                 String             @id @default(uuid()) @db.Uuid
-  registrationNumber String             @unique
-  fullName           String
-  department         String?
+model Form {
+  id                 String   @id @default(uuid()) @db.Uuid
+  registrationNumber String   @unique
+  name               String
   phone              String
-  lineId             String
-  locationId         String             @db.Uuid
-  hasCompanions      Boolean            @default(false)
-  hasCar             Boolean            @default(false)
-  carModel           String?
-  totalSeats         Int?
-  availableSeats     Int?
-  canTakeOthers      Boolean?
-  foodAllergy        String?
+  lineId             String?
+  locationId         String
+  follower           Int      @default(0)
+  companions         Json     @default("[]")
+  travelOption       String   @default("SELF_DRIVE")
   note               String?
-  status             RegistrationStatus @default(PENDING)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  location   Location    @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  companions Companion[]
+  status             String   @default("PENDING")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@index([locationId])
   @@index([status])
   @@index([createdAt])
   @@index([phone])
-}
-
-model Companion {
-  id             String   @id @default(uuid()) @db.Uuid
-  registrationId String   @db.Uuid
-  fullName       String
-  phone          String?
-  relationship   String?
-  createdAt      DateTime @default(now())
-
-  registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-
-  @@index([registrationId])
-}
-
-/// Per-year counter backing the OUT-<year>-<seq> registration numbers.
-/// Incremented with a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`
-/// so concurrent registrations can never receive the same sequence value.
-model RegistrationSequence {
-  year       Int      @id
-  lastNumber Int      @default(0)
-  updatedAt  DateTime @updatedAt
+  @@map("form")
 }
