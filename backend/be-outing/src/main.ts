@@ -12,7 +12,9 @@ async function bootstrap() {
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(server),
-    { bufferLogs: true },
+    {
+      bufferLogs: true,
+    },
   );
 
   const config = app.get(ConfigService);
@@ -48,9 +50,19 @@ async function bootstrap() {
 
   await app.init();
 
+  const port = config.get<number>('PORT', 3000);
+
+  await server.listen(port);
+
+  logger.log(`Server running on http://localhost:${port}`);
+  logger.log(`API base URL: http://localhost:${port}/api`);
   logger.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
-void bootstrap();
+void bootstrap().catch((error) => {
+  const logger = new Logger('Bootstrap');
+  logger.error('Failed to start application', error);
+  process.exit(1);
+});
 
 export default server;
