@@ -1,13 +1,16 @@
 "use client";
 
-import { AlertCircle, Check, type LucideIcon } from "lucide-react";
+import { AlertCircle, Check, Maximize2, type LucideIcon } from "lucide-react";
 import {
   type InputHTMLAttributes,
   type ReactNode,
   type TextareaHTMLAttributes,
   useId,
+  useState,
 } from "react";
 import Image from "next/image";
+import { LocationDetailDialog } from "./location-dialog";
+import { Location } from "@/src/_lib/api/registration-type";
 
 const inputBase =
   "w-full rounded-[10px] border bg-white text-[15px] text-card-foreground placeholder:text-muted/70 transition-shadow focus:outline-none";
@@ -156,9 +159,13 @@ export type RadioCardOption = {
   value: string;
   label: string;
   description?: string;
+  beds?: number;
+  residentCapacity?: number;
+  carparkCapacity?: number;
+  address?: string;
   icon?: IconComponent;
   // New, for the image-card style (room/venue picker, etc.)
-  image?: string;
+  imageUrl?: string;
   badge?: string; // e.g. "Available now"
   meta?: string; // e.g. "Max. 15 seats  |  10 m2"
   amenities?: IconComponent[]; // small icons over the image, e.g. [Camera, Bluetooth]
@@ -216,7 +223,7 @@ export function RadioCardGroup({
           const inputId = `${name}-${option.value}`;
           const checked = value === option.value;
 
-          return option.image ? (
+          return option.imageUrl ? (
             <ImageRadioCard
               key={option.value}
               inputId={inputId}
@@ -328,7 +335,20 @@ function IconRadioCard({
 }
 
 // New: the room-card style from the screenshot — image on top with a badge
-// and amenity icons overlaid, then title / meta / a select pill below.
+// and amenity icons overlaid, then title / meta / a view-details trigger below.
+function toLocation(option: RadioCardOption): Location {
+  return {
+    id: option.value,
+    name: option.label,
+    description: option.description ?? null,
+    address: option.address ?? null,
+    beds: option.beds ?? 0,
+    residentCapacity: option.residentCapacity ?? 0,
+    carparkCapacity: option.carparkCapacity ?? 0,
+    imageUrl: option.imageUrl ?? null,
+  };
+}
+
 function ImageRadioCard({
   inputId,
   name,
@@ -344,114 +364,130 @@ function ImageRadioCard({
   required?: boolean;
   onChange: (value: string) => void;
 }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const location = toLocation(option);
+
   return (
-    <label
-      htmlFor={inputId}
-      className={`relative flex h-full w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white transition-all ${
+    <div
+      className={`relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-white transition-all ${
         checked
           ? "border-brand ring-1 ring-brand"
           : "border-line hover:border-brand/40 hover:shadow-sm"
       }`}
     >
-      <input
-        type="radio"
-        id={inputId}
-        name={name}
-        value={option.value}
-        checked={checked}
-        onChange={() => onChange(option.value)}
-        className="peer sr-only"
-        required={required}
-      />
+      <label
+        htmlFor={inputId}
+        className="relative flex min-h-0 flex-1 cursor-pointer flex-col"
+      >
+        <input
+          type="radio"
+          id={inputId}
+          name={name}
+          value={option.value}
+          checked={checked}
+          onChange={() => onChange(option.value)}
+          className="peer sr-only"
+          required={required}
+        />
 
-      {/* Image */}
-      <div className="relative h-32 w-full shrink-0 bg-surface">
-        {option.image ? (
-          <Image
-            src={option.image}
-            alt={option.label}
-            fill
-            sizes="(max-width: 640px) 100vw, 256px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-muted">
-            No image
-          </div>
-        )}
-
-        {/* Badge */}
-        {option.badge && (
-          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-brand shadow-sm backdrop-blur-sm">
-            {option.badge}
-          </span>
-        )}
-
-        {/* Amenities */}
-        {option.amenities && option.amenities.length > 0 && (
-          <div className="absolute bottom-2 left-2 flex gap-1.5">
-            {option.amenities.map((Amenity, index) => (
-              <span
-                key={index}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm"
-              >
-                <Amenity
-                  className="h-3.5 w-3.5"
-                  aria-hidden="true"
-                  strokeWidth={2}
-                />
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Selected check */}
-        {checked && (
-          <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-sm">
-            <Check
-              className="h-4 w-4"
-              aria-hidden="true"
-              strokeWidth={2.5}
+        {/* Image */}
+        <div className="relative h-32 w-full shrink-0 bg-surface">
+          {option.imageUrl ? (
+            <Image
+              src={option.imageUrl}
+              alt={option.label}
+              fill
+              sizes="(max-width: 640px) 100vw, 256px"
+              className="object-cover"
             />
-          </span>
-        )}
-      </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-muted">
+              No image
+            </div>
+          )}
 
-      {/* Content */}
-      <div className="flex min-h-[116px] flex-1 flex-col p-3">
-        <div className="min-w-0">
-          <span className="block text-sm font-semibold text-card-foreground">
-            {option.label}
-          </span>
-
-          {option.description && (
-            <span className="mt-1 block text-xs leading-5 text-muted">
-              {option.description}
+          {option.badge && (
+            <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-brand shadow-sm backdrop-blur-sm">
+              {option.badge}
             </span>
           )}
 
-          {option.meta && (
-            <span className="mt-1 block text-xs text-muted">
-              {option.meta}
+          {option.amenities && option.amenities.length > 0 && (
+            <div className="absolute bottom-2 left-2 flex gap-1.5">
+              {option.amenities.map((Amenity, index) => (
+                <span
+                  key={index}
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm"
+                >
+                  <Amenity
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                    strokeWidth={2}
+                  />
+                </span>
+              ))}
+            </div>
+          )}
+
+          {checked && (
+            <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-sm">
+              <Check
+                className="h-4 w-4"
+                aria-hidden="true"
+                strokeWidth={2.5}
+              />
             </span>
           )}
         </div>
 
-        {/* Views */}
-        <span
-          className={`mt-auto flex w-full shrink-0 items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+        {/* Content */}
+        <div className="flex flex-1 flex-col p-3 pb-2">
+          <div className="min-w-0">
+            <span className="block text-sm font-semibold text-card-foreground">
+              {option.label}
+            </span>
+
+            {option.description && (
+              <span className="mt-1 block text-xs leading-5 text-muted line-clamp-2">
+                {option.description}
+              </span>
+            )}
+
+            {option.meta && (
+              <span className="mt-1 block text-xs text-muted">
+                {option.meta}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <span className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-transparent peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
+      </label>
+
+      <div className="px-3 pb-3">
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className={`flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
             checked
-              ? "bg-brand text-white"
-              : "bg-brand/10 text-brand"
+              ? "bg-brand text-white hover:bg-brand-hover"
+              : "bg-brand/10 text-brand hover:bg-brand/15"
           }`}
         >
-          Views
-        </span>
+          <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
+          View details
+          <span className="sr-only"> for {option.label}</span>
+        </button>
       </div>
 
-      {/* Keyboard focus */}
-      <span className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-transparent peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
-    </label>
+      <LocationDetailDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        location={location}
+        isSelected={checked}
+        onSelect={(id) => onChange(id)}
+      />
+    </div>
   );
 }
 

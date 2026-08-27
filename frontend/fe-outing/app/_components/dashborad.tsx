@@ -238,7 +238,7 @@ function SentFormDialog({ handleSentForm }: { handleSentForm: () => void }) {
       <DialogTrigger>
       <Button>Sent Form</Button>
       </DialogTrigger>
-      <DialogContent className="text-black">
+      <DialogContent className="gap-4 p-6 text-black">
         <DialogHeader>
           <DialogTitle>Copy Form URL</DialogTitle>
         </DialogHeader>

@@ -30,14 +30,59 @@
   --color-accent: #C58B62;
 
   /* Feedback */
-  --color-success: #2F855A;
-  --color-danger: #C53030;
+  --color-success: #16A34A;
+  --color-danger: #DC2626;
 
   /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Dialog animations */
+  --animate-dialogOverlayIn: dialogOverlayIn 200ms ease-out;
+  --animate-dialogOverlayOut: dialogOverlayOut 150ms ease-in;
+  --animate-dialogContentIn: dialogContentIn 200ms ease-out;
+  --animate-dialogContentOut: dialogContentOut 150ms ease-in;
 }
 
+@keyframes dialogOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogOverlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialogContentIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialogContentOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
 
 body {
   background: var(--background);
