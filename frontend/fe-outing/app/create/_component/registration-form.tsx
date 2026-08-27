@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Car,
@@ -35,6 +35,7 @@ import {
   type RadioCardOption,
 } from "./form-fields";
 import ConformationDialog from "./conformation-dialog";
+import { getLocations } from "../../../src/_lib/api/registrationService";
 
 type Companion = {
   id: string;
@@ -61,45 +62,6 @@ type FormErrors = Record<string, string>;
 const MAX_COMPANIONS = 10;
 const MAX_NOTE_LENGTH = 1000;
 const PHONE_REGEX = /^0\d{8,9}$/;
-
-const LOCATIONS: RadioCardOption[] = [
-  {
-    value: "1",
-    label: "Thann Pool Villa",
-    description:
-      "A private luxury pool villa surrounded by nature, offering panoramic sunset and Phaya Yen mountain views.",
-    imageUrl: "https://chillpainai.com/storage/scoop/14639/3.jpg",
-    address: "Pak Chong, Nakhon Ratchasima, Thailand",
-    beds: 4,
-    residentCapacity: 8,
-    carparkCapacity: 3,
-  },
-  {
-    value: "2",
-    label: "The Scandic Khao Yai",
-    description:
-      "The Scandic Khao Yai offers a cozy Scandinavian-style stay surrounded by the beautiful mountains of Khao Yai.",
-    imageUrl:
-      "https://www.chillpainai.com/src/wewakeup/scoop/images/e8e4b47de657ffbe94b9874e17952b3e3af26a4b.jpg",
-    address: "Mu Si, Pak Chong, Nakhon Ratchasima, Thailand",
-    beds: 3,
-    residentCapacity: 6,
-    carparkCapacity: 2,
-  },
-  {
-    value: "3",
-    label: "La Vallee Khaoyai",
-    description:
-      "La Vallee Khaoyai offers a modern private villa with a relaxed atmosphere, featuring 3 bedrooms, a private pool with jacuzzi, living room, and fully equipped kitchen.",
-    imageUrl:
-      "https://www.chillpainai.com/src/wewakeup/scoop/images/f7d5b3e5fc308afd8ea685b454bc288760cb648b.jpg",
-    address: "Khao Yai, Pak Chong, Nakhon Ratchasima, Thailand",
-    beds: 3,
-    residentCapacity: 6,
-    carparkCapacity: 2,
-  },
-];
-
 
 const TRAVEL_OPTIONS: RadioCardOption[] = [
   {
@@ -262,7 +224,7 @@ function focusField(
   if (fieldKey === "locationId") {
     document
       .getElementById(
-        `locationId-${form.locationId || LOCATIONS[0].value}`,
+        `locationId-${form.locationId}`,
       )
       ?.focus();
 
@@ -297,6 +259,22 @@ export default function RegistrationForm() {
     useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const locations = useQuery({
+    queryKey: ["locations"],
+    queryFn: () => getLocations(),
+  });
+  
+  const LOCATIONS = locations.data?.map((location) => ({
+    value: location.id,
+    label: location.name,
+    description: location.description ?? "",
+    imageUrl: location.imageUrl?.[0] ?? "",
+    address: location.address ?? "",
+    beds: location.beds,
+    residentCapacity: location.residentCapacity,
+    carparkCapacity: location.carparkCapacity,
+  })) ?? [];
 
   const validateAndSetField = useCallback(
     (
