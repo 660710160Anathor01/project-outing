@@ -329,13 +329,14 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-row gap-4 items-center justify-between">
         <h1 className="text-2xl font-bold text-black">Registration Dashboard</h1>
-        <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
         <Button onClick={() => {
           handleSentForm();
         }}>Sent Form</Button>
       </div>
+      
+      <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
       <SummaryCard
         submitted={submittedRegistrations}
         mostTravelOption={mostTravelOption}
