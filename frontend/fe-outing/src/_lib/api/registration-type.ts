@@ -22,48 +22,30 @@ export type Companion = {
 };
 
 export type Registration = {
-  id: string;
-  registrationNumber: string;
-  fullName: string;
-  department: string | null;
+  name: string;
   phone: string;
   lineId: string;
   locationId: string;
-  hasCompanions: boolean;
-  hasCar: boolean;
-  carModel: string | null;
-  totalSeats: number | null;
-  availableSeats: number | null;
-  canTakeOthers: boolean | null;
-  foodAllergy: string | null;
-  note: string | null;
-  status: RegistrationStatus;
+  companions?: CompanionInput[];
+  travelOption: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
+  note?: string;
   createdAt: string;
   updatedAt: string;
-  location: Location;
-  companions: Companion[];
 };
 
 export type CompanionInput = {
-  fullName: string;
+  name: string;
   phone?: string;
   relationship?: string;
 };
 
 export type CreateRegistrationInput = {
-  fullName: string;
-  department?: string;
+  name: string;
   phone: string;
   lineId: string;
   locationId: string;
-  hasCompanions: boolean;
   companions?: CompanionInput[];
-  hasCar: boolean;
-  carModel?: string;
-  totalSeats?: number;
-  availableSeats?: number;
-  canTakeOthers?: boolean;
-  foodAllergy?: string;
+  travelOption: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
   note?: string;
 };
 

@@ -6,7 +6,7 @@ import {
     UpdateRegistrationInput 
 } from "./registration-type";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL ?? "http://localhost:3001";
 
 function toMessages(body: unknown, status: number): string[] {
     if (body && typeof body === "object" && "message" in body) {
@@ -61,19 +61,10 @@ function toMessages(body: unknown, status: number): string[] {
   function buildRegistrationBody<T extends UpdateRegistrationInput>(input: T): T {
     const body = compact(input);
   
-    if (body.hasCompanions === false) delete body.companions;
     if (body.companions) {
       body.companions = body.companions.map((companion) => compact(companion));
     }
   
-    // Car columns are cleared server-side when hasCar is false; omit them so a
-    // stale value from an earlier wizard step never reaches validation.
-    if (body.hasCar === false) {
-      delete body.carModel;
-      delete body.totalSeats;
-      delete body.availableSeats;
-      delete body.canTakeOthers;
-    }
     return body;
   }
   
@@ -91,6 +82,10 @@ function toMessages(body: unknown, status: number): string[] {
       body: buildRegistrationBody(input),
       signal,
     });
+  }
+
+  export function getAllRegistrations(signal?: AbortSignal) {
+    return request<Registration[]>("/registrations", { signal });
   }
   
   export function getRegistration(id: string, signal?: AbortSignal) {

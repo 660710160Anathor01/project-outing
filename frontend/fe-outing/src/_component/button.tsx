@@ -3,6 +3,7 @@ interface ButtonProps {
     onClick?: () => void;
     variant?: "primary" | "secondary" | "danger" | "warning" | "info" | "light" | "dark";
     size?: "sm" | "md" | "lg";
+    disabled?: boolean;
     className?: string;
 }
 
@@ -28,11 +29,13 @@ export function Button({
     variant = "primary",
     size = "md",
     className = "",
+    disabled = false,
 }: ButtonProps) {
     return (
         <button
-            className={`${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+            className={`${variantClasses[variant]} rounded-md hover:opacity-80 ${sizeClasses[size]} ${className}`}
             onClick={onClick}
+            disabled={disabled}
         >
             {children}
         </button>
