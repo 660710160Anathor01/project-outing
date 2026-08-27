@@ -32,23 +32,14 @@ async function initializeApp() {
     app.use(helmet());
 
     const allowedOrigins = config
-      .get<string>(
-        "CORS_ORIGINS",
-        "http://localhost:3000",
-      )
+      .get<string>("CORS_ORIGINS", "http://localhost:3000")
       .split(",")
       .map((origin) => origin.trim())
       .filter(Boolean);
 
     app.enableCors({
       origin: allowedOrigins,
-      methods: [
-        "GET",
-        "POST",
-        "PATCH",
-        "DELETE",
-        "OPTIONS",
-      ],
+      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       credentials: false,
       maxAge: 600,
     });
@@ -72,10 +63,10 @@ async function initializeApp() {
   return appPromise;
 }
 
-// Local
-if (process.env.NODE_ENV !== "production") {
+// Local development only
+if (!process.env.VERCEL) {
   initializeApp()
-    .then(async () => {
+    .then(() => {
       const port = Number(process.env.PORT) || 3001;
 
       server.listen(port, () => {
@@ -90,13 +81,14 @@ if (process.env.NODE_ENV !== "production") {
     });
 }
 
-// Vercel
+// Vercel Function
 export default async function handler(
   req: express.Request,
   res: express.Response,
 ) {
   try {
     await initializeApp();
+
     server(req, res);
   } catch (error) {
     console.error("Failed to initialize NestJS", error);
