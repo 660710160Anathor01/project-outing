@@ -8,7 +8,13 @@ import { AppModule } from './app.module';
 
 const server: Express = express();
 
+let initialized = false;
+
 async function bootstrap() {
+  if (initialized) {
+    return;
+  }
+
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(server),
@@ -50,19 +56,16 @@ async function bootstrap() {
 
   await app.init();
 
-  const port = config.get<number>('PORT', 3000);
+  initialized = true;
 
-  await server.listen(port);
-
-  logger.log(`Server running on http://localhost:${port}`);
-  logger.log(`API base URL: http://localhost:${port}/api`);
+  logger.log('NestJS application initialized');
+  logger.log(`API base URL: /api`);
   logger.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
 void bootstrap().catch((error) => {
   const logger = new Logger('Bootstrap');
-  logger.error('Failed to start application', error);
-  process.exit(1);
+  logger.error('Failed to initialize application', error);
 });
 
 export default server;
