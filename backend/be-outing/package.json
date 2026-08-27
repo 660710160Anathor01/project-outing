@@ -8,7 +8,7 @@
   "packageManager": "pnpm@11.20.0",
   "engines": {
     "node": "22.x",
-    "pnpm": ">=11.0.0"
+    "pnpm": "11.20.0"
   },
   "scripts": {
     "build": "prisma generate && nest build",
@@ -29,6 +29,7 @@
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed"
   },
+
   "dependencies": {
     "@codegenie/serverless-express": "^5.0.0",
     "@nestjs/common": "^11.0.1",
