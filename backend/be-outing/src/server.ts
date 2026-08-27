@@ -8,9 +8,14 @@ import { AppModule } from "./app.module";
 
 const server: Express = express();
 
+let appInitialized = false;
 let initPromise: Promise<void> | null = null;
 
-async function bootstrap(): Promise<void> {
+async function initializeApp(): Promise<void> {
+  if (appInitialized) {
+    return;
+  }
+
   if (initPromise) {
     return initPromise;
   }
@@ -32,14 +37,23 @@ async function bootstrap(): Promise<void> {
     app.use(helmet());
 
     const allowedOrigins = config
-      .get<string>("CORS_ORIGINS", "http://localhost:3000")
+      .get<string>(
+        "CORS_ORIGINS",
+        "http://localhost:3000",
+      )
       .split(",")
       .map((origin) => origin.trim())
       .filter(Boolean);
 
     app.enableCors({
       origin: allowedOrigins,
-      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+      methods: [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+      ],
       credentials: false,
       maxAge: 600,
     });
@@ -57,13 +71,20 @@ async function bootstrap(): Promise<void> {
 
     await app.init();
 
+    appInitialized = true;
+
     logger.log("NestJS application initialized");
   })();
 
-  return initPromise;
+  try {
+    await initPromise;
+  } catch (error) {
+    initPromise = null;
+    throw error;
+  }
 }
 
 export async function getServer(): Promise<Express> {
-  await bootstrap();
+  await initializeApp();
   return server;
 }

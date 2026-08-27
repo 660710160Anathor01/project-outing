@@ -5,7 +5,17 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ) {
-  const server = await getServer();
+  try {
+    const server = await getServer();
 
-  server(req, res);
+    server(req, res);
+  } catch (error) {
+    console.error("Failed to initialize NestJS:", error);
+
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: "Failed to initialize server",
+      });
+    }
+  }
 }
