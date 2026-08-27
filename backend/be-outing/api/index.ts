@@ -1,3 +1,5 @@
+console.log("🔥 API FUNCTION LOADED");
+
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
@@ -12,6 +14,8 @@ const server = express();
 let cachedHandler: ReturnType<typeof serverlessExpress> | null = null;
 
 async function bootstrap() {
+  console.log("🔥 BOOTSTRAP");
+
   if (cachedHandler) {
     return cachedHandler;
   }
@@ -56,6 +60,8 @@ async function bootstrap() {
 
   await app.init();
 
+  console.log("🔥 NEST INITIALIZED");
+
   cachedHandler = serverlessExpress({
     app: server,
   });
@@ -64,6 +70,8 @@ async function bootstrap() {
 }
 
 export default async function handler(req: any, res: any) {
+  console.log("🔥 REQUEST:", req.method, req.url);
+
   const handler = await bootstrap();
 
   return handler(req, res);
