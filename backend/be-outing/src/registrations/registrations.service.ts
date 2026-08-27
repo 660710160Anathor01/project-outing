@@ -82,9 +82,7 @@ export class RegistrationsService {
           lineId: dto.lineId,
         }),
 
-        ...(dto.locationId !== undefined && {
-          locationId: dto.locationId,
-        }),
+
 
         ...(dto.companions !== undefined && {
           follower: dto.companions.length,
