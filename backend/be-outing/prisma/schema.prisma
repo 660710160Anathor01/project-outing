@@ -9,6 +9,21 @@ datasource db {
   provider = "postgresql"
 }
 
+model Location {
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String   @unique
+  description      String?
+  address          String
+  beds             Int      @default(0)
+  residentCapacity Int      @default(0)
+  carparkCapacity  Int      @default(0)
+  imageUrl         String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+}
+
+
 model Form {
   id                 String   @id @default(uuid()) @db.Uuid
   registrationNumber String   @unique
@@ -19,6 +34,9 @@ model Form {
   follower           Int      @default(0)
   companions         Json     @default("[]")
   travelOption       String   @default("SELF_DRIVE")
+  carShare           Boolean  @default(false)
+  emptySeats         Int      @default(0)
+  address            String?
   note               String?
   status             String   @default("PENDING")
   createdAt          DateTime @default(now())

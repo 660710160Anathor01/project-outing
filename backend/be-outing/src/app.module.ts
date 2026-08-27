@@ -5,7 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
-// import { LocationsModule } from './locations/locations.module';
+import { LocationsModule } from './locations/locations.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 
@@ -28,7 +28,7 @@ import { RegistrationsModule } from './registrations/registrations.module';
       }),
     }),
     PrismaModule,
-    // LocationsModule,
+    LocationsModule,
     RegistrationsModule,
   ],
   controllers: [AppController],

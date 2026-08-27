@@ -1,44 +1,30 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import helmet from 'helmet';
-import express, { type Express } from 'express';
-import { AppModule } from './app.module';
-
-const server: Express = express();
-
-let initialized = false;
+import { Logger, ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { NestFactory } from "@nestjs/core";
+import helmet from "helmet";
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  if (initialized) {
-    return;
-  }
-
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(server),
-    {
-      bufferLogs: true,
-    },
-  );
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
   const config = app.get(ConfigService);
-  const logger = new Logger('Bootstrap');
+  const logger = new Logger("Bootstrap");
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   app.use(helmet());
 
   const allowedOrigins = config
-    .get<string>('CORS_ORIGINS', 'http://localhost:3000')
-    .split(',')
+    .get<string>("CORS_ORIGINS", "http://localhost:3000")
+    .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 
   app.enableCors({
     origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     credentials: false,
     maxAge: 600,
   });
@@ -54,18 +40,16 @@ async function bootstrap() {
     }),
   );
 
-  await app.init();
+  const port = Number(process.env.PORT) || 3001;
 
-  initialized = true;
+  await app.listen(port);
 
-  logger.log('NestJS application initialized');
-  logger.log(`API base URL: /api`);
-  logger.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  logger.log(`Server running at http://localhost:${port}`);
+  logger.log(`API base URL: http://localhost:${port}/api`);
 }
 
-void bootstrap().catch((error) => {
-  const logger = new Logger('Bootstrap');
-  logger.error('Failed to initialize application', error);
+bootstrap().catch((error) => {
+  const logger = new Logger("Bootstrap");
+  logger.error("Failed to start application", error);
+  process.exit(1);
 });
-
-export default server;
