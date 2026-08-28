@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dashboard } from "./_components/dashborad";
+import { Logout } from "../_component/logout";
 
 export default function Home() {
   const router = useRouter();
@@ -11,22 +12,28 @@ export default function Home() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
+    // const role = "user";
+    console.log("token", token);
+    console.log("role", role);
 
     if (!token || role !== "admin") {
+    console.log("token", token);
       router.replace("/");
       return;
     }
 
     setChecking(false);
   }, [router]);
-
-  // ป้องกัน Dashboard โผล่แวบหนึ่งก่อนตรวจสอบเสร็จ
+  
   if (checking) {
     return null;
   }
 
   return (
     <div className="bg-surface p-8">
+        <div className="flex justify-end mb-4">
+            <Logout />
+        </div>
       <Dashboard />
     </div>
   );
