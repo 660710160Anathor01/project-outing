@@ -3,7 +3,9 @@ import {
     Location, 
     Registration, 
     CreateRegistrationInput, 
-    UpdateRegistrationInput 
+    UpdateRegistrationInput,
+    LoginInput,
+    LoginResponse
 } from "./registration-type";
 
 const BASE_URL = process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL;
@@ -73,6 +75,11 @@ function toMessages(body: unknown, status: number): string[] {
     return body;
   }
 
+  function buildLoginBody<T extends LoginInput>(input: T): T {
+    const body = compact(input);
+    return body;
+  }
+
   export function getLocations(signal?: AbortSignal) {
     return request<Location[]>("/locations", { signal });
   }
@@ -128,4 +135,8 @@ function toMessages(body: unknown, status: number): string[] {
 
   export function deleteLocation(id: string, signal?: AbortSignal) {
     return request<Location>(`/locations/${id}`, { method: "DELETE", signal });
+  }
+
+  export function login(input: LoginInput, signal?: AbortSignal) {
+    return request<LoginResponse>("/login", { method: "POST", body: buildLoginBody(input), signal });
   }
