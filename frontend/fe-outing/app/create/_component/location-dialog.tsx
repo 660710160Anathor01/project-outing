@@ -514,7 +514,7 @@ export function LocationDetailDialog({
                             onClick={handleViewSource}
                             className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                           >
-                            More info
+                            More info 
                           </button>
                         )}
                       </div>

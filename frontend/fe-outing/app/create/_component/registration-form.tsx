@@ -296,6 +296,7 @@ export default function RegistrationForm() {
     description: location.description ?? "",
     mapUrl: location.mapUrl ?? "",
     imageUrl: location.imageUrl ?? "",
+    sourceUrl: location.sourceUrl ?? "",
     address: location.address ?? "",
     beds: location.beds,
     residentCapacity: location.residentCapacity,
