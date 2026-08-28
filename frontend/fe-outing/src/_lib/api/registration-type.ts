@@ -66,19 +66,6 @@ export type CreateRegistrationInput = {
   note?: string;
 };
 
-export type Location = {
-  id: string;
-  name: string;
-  description: string | null;
-  address: string | null;
-  beds: number;
-  residentCapacity: number;
-  carparkCapacity: number;
-  mapUrl: string | null;
-  imageUrl: string | null;
-  sourceUrl: string | null;
-}
-
 export type CreateLocationInput = {
   name: string;
   description?: string;
