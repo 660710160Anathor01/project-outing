@@ -10,6 +10,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   ExternalLink,
   ImageOff,
@@ -28,6 +30,7 @@ import type { Location } from "@/src/_lib/api/registration-type";
 
 const DESCRIPTION_CLAMP_THRESHOLD = 180;
 const SUCCESS_CLOSE_DELAY_MS = 900;
+const SWIPE_THRESHOLD_PX = 50;
 
 export type LocationDetailDialogProps = {
   open: boolean;
@@ -51,8 +54,10 @@ function buildMapUrl(location: Location): string {
   const query = encodeURIComponent(
     location.address ?? location.name,
   );
-  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  return location.mapUrl ?? `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
+
+
 
 function LocationSkeleton() {
   return (
@@ -84,24 +89,154 @@ function LocationImage({
 }: {
   location: Location;
 }) {
-  return (
-    <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-surface">
-      {location.imageUrl ? (
-        <Image
-          src={location.imageUrl}
-          alt={location.name}
-          fill
-          sizes="(max-width: 640px) 100vw, 512px"
-          className="object-cover"
-          priority
-        />
-      ) : (
+  const images = location.imageUrl ?? [];
+  const count = images.length;
+
+  const [index, setIndex] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartXRef = useRef<number | null>(null);
+
+  // Reset to the first image whenever we're shown a different location.
+  useEffect(() => {
+    setIndex(0);
+  }, [location.id]);
+
+  const goTo = useCallback(
+    (next: number) => {
+      if (count === 0) return;
+      setIndex(((next % count) + count) % count);
+    },
+    [count],
+  );
+
+  const goPrev = useCallback(() => goTo(index - 1), [goTo, index]);
+  const goNext = useCallback(() => goTo(index + 1), [goTo, index]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (count < 2) return;
+    dragStartXRef.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartXRef.current === null) return;
+    event.preventDefault();
+    setDragOffset(event.clientX - dragStartXRef.current);
+  };
+
+  const endDrag = () => {
+    if (dragStartXRef.current === null) return;
+    if (dragOffset <= -SWIPE_THRESHOLD_PX) {
+      goNext();
+    } else if (dragOffset >= SWIPE_THRESHOLD_PX) {
+      goPrev();
+    }
+    dragStartXRef.current = null;
+    setDragOffset(0);
+  };
+
+  if (count === 0) {
+    return (
+      <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-surface">
         <div className="flex h-full flex-col items-center justify-center gap-2 text-muted">
           <ImageOff className="h-8 w-8" aria-hidden="true" strokeWidth={1.5} />
           <span className="text-sm">No photo yet</span>
         </div>
+        <div
+          className="absolute right-3 top-3"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <DialogCloseIconButton />
+        </div>
+      </div>
+    );
+  }
+
+  const isDragging = dragStartXRef.current !== null;
+
+  return (
+    <div
+      className="relative aspect-[16/10] shrink-0 touch-pan-y select-none overflow-hidden bg-surface"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+    >
+      <div
+        className="flex h-full"
+        style={{
+          width: `${count * 100}%`,
+          transform: `translateX(calc(${-index * (100 / count)}% + ${dragOffset}px))`,
+          transition: isDragging ? "none" : "transform 300ms ease-out",
+        }}
+      >
+        {images.map((src, i) => (
+          <div
+            key={src}
+            className="relative h-full shrink-0"
+            style={{ width: `${100 / count}%` }}
+          >
+            <Image
+              src={src}
+              alt={`${location.name} photo ${i + 1} of ${count}`}
+              fill
+              sizes="(max-width: 640px) 100vw, 512px"
+              className="pointer-events-none object-cover"
+              draggable={false}
+              priority={i === 0}
+            />
+          </div>
+        ))}
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            onPointerDown={(event) => event.stopPropagation()}
+            aria-label="Previous photo"
+            className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            onPointerDown={(event) => event.stopPropagation()}
+            aria-label="Next photo"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden="true" strokeWidth={2} />
+          </button>
+          <div
+            className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5"
+            role="tablist"
+            aria-label="Photo selector"
+          >
+            {images.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Go to photo ${i + 1}`}
+                onClick={() => goTo(i)}
+                onPointerDown={(event) => event.stopPropagation()}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                  i === index ? "bg-white" : "bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        </>
       )}
-      <div className="absolute right-3 top-3">
+
+      <div
+        className="absolute right-3 top-3"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
         <DialogCloseIconButton />
       </div>
     </div>
@@ -278,6 +413,9 @@ export function LocationDetailDialog({
       ? undefined
       : buildMapUrl(location)
     : undefined;
+  const sourceUrl = location
+    ? location.sourceUrl
+    : undefined;
 
   const handleViewMap = () => {
     if (!location) return;
@@ -287,6 +425,14 @@ export function LocationDetailDialog({
     }
     if (mapHref) {
       window.open(mapHref, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleViewSource = () => {
+    if (!location) return;
+    if (sourceUrl) {
+      window.open(sourceUrl, "_blank", "noopener,noreferrer");
+      return;
     }
   };
 
@@ -336,6 +482,15 @@ export function LocationDetailDialog({
                             />
                           </button>
                         ) : null}
+                        {location.sourceUrl && (
+                          <button
+                            type="button"
+                            onClick={handleViewSource}
+                            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                          >
+                            More info
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

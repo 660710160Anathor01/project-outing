@@ -165,7 +165,9 @@ export type RadioCardOption = {
   address?: string;
   icon?: IconComponent;
   // New, for the image-card style (room/venue picker, etc.)
+  mapUrl?: string;
   imageUrl?: string;
+  sourceUrl?: string;
   badge?: string; // e.g. "Available now"
   meta?: string; // e.g. "Max. 15 seats  |  10 m2"
   amenities?: IconComponent[]; // small icons over the image, e.g. [Camera, Bluetooth]
@@ -345,7 +347,9 @@ function toLocation(option: RadioCardOption): Location {
     beds: option.beds ?? 0,
     residentCapacity: option.residentCapacity ?? 0,
     carparkCapacity: option.carparkCapacity ?? 0,
+    mapUrl: option.mapUrl ?? null,
     imageUrl: option.imageUrl ?? null,
+    sourceUrl: option.sourceUrl ?? null,
   };
 }
 
@@ -394,7 +398,7 @@ function ImageRadioCard({
         <div className="relative h-32 w-full shrink-0 bg-surface">
           {option.imageUrl ? (
             <Image
-              src={option.imageUrl}
+              src={option.imageUrl[0]}
               alt={option.label}
               fill
               sizes="(max-width: 640px) 100vw, 256px"

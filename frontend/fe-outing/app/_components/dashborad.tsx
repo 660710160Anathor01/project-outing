@@ -1,8 +1,9 @@
 "use client";
-import { Copy } from "lucide-react";
+import { Copy, Eye, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
-import { getAllRegistrations } from "../../src/_lib/api/registrationService";
+import { getAllRegistrations, getLocations } from "../../src/_lib/api/registrationService";
 import {
   Card,
   CardHeader,
@@ -26,12 +27,7 @@ const TravelOptionMapping: Record<string, string> = {
   "PUBLIC_TRANSPORT": "Public Transport",
 };
 
-const LocationMapping: Record<string, string> = {
-  "1": "Khao Yai National Park",
-  "2": "Toscana Valley",
-  "3": "PB Valley Khao Yai Winery",
 
-};
 
 type Filter = {
   travelOption: string; // "" means "All"
@@ -48,21 +44,28 @@ const emptyFilter = (): Filter => ({
 type RegistrationFilterProps = {
   filter: Filter;
   onFilterChange: (filter: Filter) => void;
+  locationMapping: Record<string, string>;
 };
 
 function SummaryCard({
   submitted,
   mostTravelOption,
+  selfDriveCount,
+  carShareCount,
   companionsCount,
   mostLocationPicked,
+  locationMapping,
 }: {
   submitted: number;
   mostTravelOption: string;
+  selfDriveCount: number;
+  carShareCount: number;
   companionsCount: number;
   mostLocationPicked: string;
+  locationMapping: Record<string, string>;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 text-black my-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 bg-card text-card-foreground my-4 ">
       <Card>
         <CardHeader>
           <CardTitle>Submitted Registrations</CardTitle>
@@ -82,10 +85,26 @@ function SummaryCard({
       </Card>
       <Card>
         <CardHeader>
+          <CardTitle>Self Drive</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <h1>{selfDriveCount}</h1>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Car Share</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <h1>{carShareCount}</h1>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle>Most Location Picked</CardTitle>
         </CardHeader>
         <CardContent>
-          <h1>{LocationMapping[mostLocationPicked] ?? "-"}</h1>
+          <h1>{locationMapping?.[mostLocationPicked] ?? '-'}</h1>
         </CardContent>
       </Card>
       <Card>
@@ -100,7 +119,7 @@ function SummaryCard({
   );
 }
 
-function RegistrationFilter({ filter, onFilterChange }: RegistrationFilterProps) {
+function RegistrationFilter({ filter, onFilterChange, locationMapping }: RegistrationFilterProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFilterChange({ ...filter, search: e.target.value });
   };
@@ -149,7 +168,6 @@ function RegistrationFilter({ filter, onFilterChange }: RegistrationFilterProps)
                 <option value="">All</option>
                 <option value="SELF_DRIVE">Self Drive</option>
                 <option value="CAR_SHARE">Car Share</option>
-                <option value="PUBLIC_TRANSPORT">Public Transport</option>
               </select>
             </div>
 
@@ -162,20 +180,24 @@ function RegistrationFilter({ filter, onFilterChange }: RegistrationFilterProps)
                 onChange={handleLocationChange}
               >
                 <option value="">All</option>
-                <option value="1">Khao Yai National Park</option>
-                <option value="2">Toscana Valley</option>
-                <option value="3">PB Valley Khao Yai Winery</option>
+                {Object.entries(locationMapping ?? {}).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={handleClear}
               disabled={!hasActiveFilter}
-              className="h-fit rounded-md bg-gray-500 p-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+              variant="outline"
+              className="h-fit rounded-md p-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <X className="w-4 h-4" />
               Clear filters
-            </button>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -183,7 +205,14 @@ function RegistrationFilter({ filter, onFilterChange }: RegistrationFilterProps)
   );
 }
 
-function RegistrationTable({ registrations }: { registrations: Registration[] }) {
+function RegistrationTable({
+  registrations,
+  locationMapping,
+}: {
+  registrations: Registration[];
+  locationMapping: Record<string, string>;
+}) {
+  const router = useRouter();
 
   return (
     <div>
@@ -192,7 +221,7 @@ function RegistrationTable({ registrations }: { registrations: Registration[] })
 
       <table className="w-full">
         <thead>
-          <tr className="text-right border-b-2 border-gray-300 grid grid-cols-7">
+          <tr className="text-right border-b-2 border-gray-300 grid grid-cols-8">
             <th className="p-2 col-span-1">Name</th>
             <th className="p-2 col-span-1">Phone</th>
             <th className="p-2 col-span-1">Line ID</th>
@@ -200,6 +229,7 @@ function RegistrationTable({ registrations }: { registrations: Registration[] })
             <th className="p-2 col-span-1">Travel Option</th>
             <th className="p-2 col-span-1">Companions</th>
             <th className="p-2 col-span-1">Note</th>
+            <th className="p-2 col-span-1">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -213,15 +243,27 @@ function RegistrationTable({ registrations }: { registrations: Registration[] })
             registrations.map((registration, index) => (
               <tr
                 key={index}
-                className="grid grid-cols-7 text-right items-center justify-center"
+                className="grid grid-cols-8 text-right items-center justify-center"
               >
                 <td className="p-2 col-span-1">{registration.name ?? "-"}</td>
                 <td className="p-2 col-span-1">{registration.phone ?? "-"}</td>
                 <td className="p-2 col-span-1">{registration.lineId ?? "-"}</td>
-                <td className="p-2 col-span-1">{LocationMapping[registration.locationId] ?? "-"}</td>
+                <td className="p-2 col-span-1">{locationMapping[registration.locationId] ?? "-"}</td>
                 <td className="p-2 col-span-1">{TravelOptionMapping[registration.travelOption] ?? "-"}</td>
                 <td className="p-2 col-span-1">{registration.companions?.length ?? "-"}</td>
                 <td className="p-2 col-span-1">{registration.note ?? "-"}</td>
+                <td className="p-2 col-span-1">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      router.push(`/detail/${registration.id}`);
+                    }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Button>
+                </td>
               </tr>
             ))
           )}
@@ -264,6 +306,19 @@ export function Dashboard() {
     queryKey: ["registrations"],
     queryFn: () => getAllRegistrations(),
   });
+
+  const {
+    data: locations,
+    isLoading: locationsLoading,
+    error: locationsError,
+  } = useQuery({
+    queryKey: ["locations"],
+    queryFn: () => getLocations(),
+  });
+  const locationMapping: Record<string, string> = (locations?.reduce((acc, location) => {
+      acc[location.id] = location.name;
+      return acc;
+    }, {} as Record<string, string>) ?? {}) ;
 
   if (isLoading) {
     return <Loading />;
@@ -324,6 +379,20 @@ export function Dashboard() {
       ["-", 0],
     )[0];
 
+  const selfDriveCount = filteredRegistrations.reduce((acc, curr) => {
+    if (curr.travelOption === "SELF_DRIVE") {
+      return acc + 1;
+    }
+    return acc;
+  }, 0);
+
+  const carShareCount = filteredRegistrations.reduce((acc, curr) => {
+    if (curr.travelOption === "CAR_SHARE") {
+      return acc + 1;
+    }
+    return acc;
+  }, 0);
+
   // คนลงทะเบียน + companions
   const companionsCount = filteredRegistrations.reduce((acc, curr) => {
     return acc + 1 + (curr.companions?.length ?? 0);
@@ -350,7 +419,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 bg-card p-6 rounded-md">
       <div className="flex flex-row gap-4 items-center justify-between">
         <h1 className="text-2xl font-bold text-black">Registration Dashboard</h1>
         <SentFormDialog handleSentForm={handleSentForm} />
@@ -360,11 +429,14 @@ export function Dashboard() {
       <SummaryCard
         submitted={submittedRegistrations}
         mostTravelOption={mostTravelOption}
+        selfDriveCount={selfDriveCount}
+        carShareCount={carShareCount}
         companionsCount={companionsCount}
         mostLocationPicked={mostLocationPicked}
+        locationMapping={locationMapping}
       />
-      <RegistrationFilter filter={filter} onFilterChange={setFilter} />
-      <RegistrationTable registrations={filteredRegistrations} />
+      <RegistrationFilter filter={filter} onFilterChange={setFilter} locationMapping={locationMapping} />
+      <RegistrationTable registrations={filteredRegistrations} locationMapping={locationMapping} />
     </div>
   );
 }

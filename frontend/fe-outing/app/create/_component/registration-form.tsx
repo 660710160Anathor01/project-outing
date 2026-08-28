@@ -102,7 +102,7 @@ const emptyForm = (): RegistrationFormData => ({
   companions: [],
   travelOption: "SELF_DRIVE",
   carShare: false,
-  emptySeats: 0,
+  emptySeats: 1,
   address: "",
   note: "",
 });
@@ -143,6 +143,31 @@ function validateForm(form: RegistrationFormData): FormErrors {
     errors.phone = "Phone number is required";
   } else if (!isValidPhone(form.phone)) {
     errors.phone = "Enter a valid Thai phone number, e.g. 0812345678";
+  }
+
+  if (form.carShare === true) {
+    const trimmedAddress = (form.address ?? "").trim();
+
+    if (!trimmedAddress) {
+      errors.address = "Address is required";
+    } else if (trimmedAddress.length < 10) {
+      errors.address = "Address must be at least 10 characters";
+    }
+
+    if (form.travelOption === "SELF_DRIVE") {
+      const seatsValue = form.emptySeats;
+      const seats = Number(seatsValue);
+
+      if (
+        seatsValue === undefined ||
+        seatsValue === null ||
+        `${seatsValue}`.trim() === "" ||
+        Number.isNaN(seats) ||
+        seats <= 0
+      ) {
+        errors.emptySeats = "Enter the number of empty seats";
+      }
+    }
   }
 
   form.companions.forEach((companion) => {
@@ -269,7 +294,8 @@ export default function RegistrationForm() {
     value: location.id,
     label: location.name,
     description: location.description ?? "",
-    imageUrl: location.imageUrl?.[0] ?? "",
+    mapUrl: location.mapUrl ?? "",
+    imageUrl: location.imageUrl ?? "",
     address: location.address ?? "",
     beds: location.beds,
     residentCapacity: location.residentCapacity,
@@ -430,6 +456,15 @@ export default function RegistrationForm() {
         locationId: regForm.locationId,
         travelOption: regForm.travelOption,
         note: regForm.note.trim() || undefined,
+        ...(regForm.carShare
+          ? {
+              carShare: true,
+              address: (regForm.address ?? "").trim(),
+              ...(regForm.travelOption === "SELF_DRIVE"
+                ? { emptySeats: Number(regForm.emptySeats) }
+                : {}),
+            }
+          : { carShare: false }),
         companions: regForm.companions.map(
           ({
             name,
@@ -543,7 +578,7 @@ export default function RegistrationForm() {
           className="flex flex-col gap-8"
           noValidate
         >
-          {(visibleErrors.length > 0 ||
+          {/* {(visibleErrors.length > 0 ||
             serverMessages.length > 0) && (
             <div className="flex flex-col gap-3">
               {visibleErrors.length > 0 && (
@@ -560,7 +595,7 @@ export default function RegistrationForm() {
                 />
               )}
             </div>
-          )}
+          )} */}
 
           <FormSection
             title="Pool Villa"
@@ -692,16 +727,19 @@ export default function RegistrationForm() {
               legend="Travel option"
               name="travelOption"
               value={regForm.travelOption}
-              onChange={(value) =>
+              onChange={(value) => {
+                const nextTravelOption =
+                  value as RegistrationFormData["travelOption"];
+
                 setRegForm((prev) => ({
                   ...prev,
-                  travelOption:
-                    value as RegistrationFormData["travelOption"],
-                  carShare: false,
-                  emptySeats: 0,
+                  travelOption: nextTravelOption,
+                  carShare:
+                    nextTravelOption === "CAR_SHARE",
+                  emptySeats: 1,
                   address: "",
-                }))
-              }
+                }));
+              }}
               options={TRAVEL_OPTIONS}
             />
 
@@ -735,26 +773,23 @@ export default function RegistrationForm() {
                   <Field
                     id="emptySeats"
                     label="Empty seats"
-                    optional
+                    required
+                    error={errors.emptySeats}
                   >
                     {(describedBy) => (
                       <TextInput
                         id="emptySeats"
                         name="emptySeats"
                         type="number"
-                        placeholder="e.g. 1"
-                        value={
-                          regForm.emptySeats
-                        }
+                        value={regForm.emptySeats}
                         onChange={handleChange}
+                        min={1}
                         onBlur={() =>
                           handleBlur(
                             "emptySeats",
                           )
                         }
-                        error={Boolean(
-                          errors.emptySeats,
-                        )}
+                        error={Boolean(errors.emptySeats)}
                         describedBy={
                           describedBy
                         }
@@ -765,7 +800,8 @@ export default function RegistrationForm() {
                   <Field
                     id="address"
                     label="Address"
-                    optional
+                    required
+                    error={errors.address}
                   >
                     {(describedBy) => (
                       <TextInput
@@ -780,9 +816,7 @@ export default function RegistrationForm() {
                             "address",
                           )
                         }
-                        error={Boolean(
-                          errors.address,
-                        )}
+                        error={Boolean(errors.address)}
                         describedBy={
                           describedBy
                         }
@@ -791,6 +825,35 @@ export default function RegistrationForm() {
                   </Field>
                 </div>
               )}
+
+            {regForm.travelOption ===
+              "CAR_SHARE" && (
+              <div>
+                <Field
+                  id="address"
+                  label="Address"
+                  required
+                  hint="Where should the driver pick you up?"
+                  error={errors.address}
+                >
+                  {(describedBy) => (
+                    <TextInput
+                      id="address"
+                      name="address"
+                      type="text"
+                      placeholder="e.g. 123 Main St, Anytown, USA"
+                      value={regForm.address}
+                      onChange={handleChange}
+                      onBlur={() =>
+                        handleBlur("address")
+                      }
+                      error={Boolean(errors.address)}
+                      describedBy={describedBy}
+                    />
+                  )}
+                </Field>
+              </div>
+            )}
           </FormSection>
 
           <FormSection

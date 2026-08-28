@@ -13,13 +13,9 @@ export type RegistrationStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
 // };
 
 export type Companion = {
-  id: string;
-  registrationId: string;
-  fullName: string;
-  lineId: string | null;
-  phone: string | null;
-  relationship?: string | null;
-  createdAt: string;
+  name: string;
+  phone?: string;
+  relationship?: string;
 };
 
 export type Location = {
@@ -30,10 +26,13 @@ export type Location = {
   beds: number;
   residentCapacity: number;
   carparkCapacity: number;
+  mapUrl: string | null;
   imageUrl: string | null;
+  sourceUrl: string | null;
 }
 
 export type Registration = {
+  id: string;
   name: string;
   phone: string;
   lineId: string;
