@@ -29,6 +29,7 @@ model Location {
   mapUrl           String?
   sourceUrl        String?
   imageUrl         String[]
+  status           String   @default("PENDING")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

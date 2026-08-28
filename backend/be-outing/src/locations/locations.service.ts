@@ -92,37 +92,41 @@ export class LocationsService {
         ...(dto.name !== undefined && {
           name: dto.name,
         }),
-
+    
         ...(dto.description !== undefined && {
           description: dto.description ?? null,
         }),
-
+    
         ...(dto.address !== undefined && {
           address: dto.address,
         }),
-
+    
         ...(dto.beds !== undefined && {
           beds: dto.beds,
         }),
-
+    
         ...(dto.residentCapacity !== undefined && {
           residentCapacity: dto.residentCapacity,
         }),
-
+    
         ...(dto.carparkCapacity !== undefined && {
           carparkCapacity: dto.carparkCapacity,
         }),
-
+    
         ...(dto.mapUrl !== undefined && {
           mapUrl: dto.mapUrl ?? null,
         }),
-
+    
         ...(dto.sourceUrl !== undefined && {
           sourceUrl: dto.sourceUrl ?? null,
         }),
-
+    
         ...(dto.imageUrl !== undefined && {
           imageUrl: dto.imageUrl,
+        }),
+    
+        ...(dto.status !== undefined && {
+          status: dto.status,
         }),
       },
     });
