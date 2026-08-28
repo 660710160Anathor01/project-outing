@@ -211,7 +211,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md h-150 rounded-xl border-line bg-card text-card-foreground shadow-sm">
+    <Card className="w-full max-w-md rounded-xl border-line bg-card text-card-foreground shadow-sm">
       <CardHeader className="space-y-2 pb-4">
         <CardTitle className="text-2xl font-semibold tracking-tight">
           Sign in
@@ -224,7 +224,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col justify-between gap-8 h-110">
+      <CardContent className="flex flex-col  justify-between gap-8">
         <div
           role="group"
           aria-label="Sign in as"
