@@ -1,8 +1,2 @@
-{
-    "functions": {
-      "dist/main.js": {
-        "includeFiles": "node_modules/**/package.json"
-      }
-    }
-  }
+{}
   
