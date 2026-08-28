@@ -89,7 +89,13 @@ function LocationImage({
 }: {
   location: Location;
 }) {
-  const images = location.imageUrl ?? [];
+  // Normalize imageUrl to string[]
+  const images: string[] = Array.isArray(location.imageUrl)
+    ? location.imageUrl
+    : location.imageUrl
+      ? [location.imageUrl]
+      : [];
+
   const count = images.length;
 
   const [index, setIndex] = useState(0);
@@ -114,23 +120,27 @@ function LocationImage({
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (count < 2) return;
+
     dragStartXRef.current = event.clientX;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (dragStartXRef.current === null) return;
+
     event.preventDefault();
     setDragOffset(event.clientX - dragStartXRef.current);
   };
 
   const endDrag = () => {
     if (dragStartXRef.current === null) return;
+
     if (dragOffset <= -SWIPE_THRESHOLD_PX) {
       goNext();
     } else if (dragOffset >= SWIPE_THRESHOLD_PX) {
       goPrev();
     }
+
     dragStartXRef.current = null;
     setDragOffset(0);
   };
@@ -139,9 +149,14 @@ function LocationImage({
     return (
       <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-surface">
         <div className="flex h-full flex-col items-center justify-center gap-2 text-muted">
-          <ImageOff className="h-8 w-8" aria-hidden="true" strokeWidth={1.5} />
+          <ImageOff
+            className="h-8 w-8"
+            aria-hidden="true"
+            strokeWidth={1.5}
+          />
           <span className="text-sm">No photo yet</span>
         </div>
+
         <div
           className="absolute right-3 top-3"
           onPointerDown={(event) => event.stopPropagation()}
@@ -171,9 +186,9 @@ function LocationImage({
           transition: isDragging ? "none" : "transform 300ms ease-out",
         }}
       >
-        {images.map((src, i) => (
+        {images.map((src: string, i: number) => (
           <div
-            key={src}
+            key={`${src}-${i}`}
             className="relative h-full shrink-0"
             style={{ width: `${100 / count}%` }}
           >
@@ -199,8 +214,13 @@ function LocationImage({
             aria-label="Previous photo"
             className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" strokeWidth={2} />
+            <ChevronLeft
+              className="h-5 w-5"
+              aria-hidden="true"
+              strokeWidth={2}
+            />
           </button>
+
           <button
             type="button"
             onClick={goNext}
@@ -208,16 +228,21 @@ function LocationImage({
             aria-label="Next photo"
             className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
           >
-            <ChevronRight className="h-5 w-5" aria-hidden="true" strokeWidth={2} />
+            <ChevronRight
+              className="h-5 w-5"
+              aria-hidden="true"
+              strokeWidth={2}
+            />
           </button>
+
           <div
             className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5"
             role="tablist"
             aria-label="Photo selector"
           >
-            {images.map((src, i) => (
+            {images.map((src: string, i: number) => (
               <button
-                key={src}
+                key={`${src}-${i}`}
                 type="button"
                 role="tab"
                 aria-selected={i === index}
@@ -242,6 +267,7 @@ function LocationImage({
     </div>
   );
 }
+
 
 function DescriptionBlock({ text }: { text: string }) {
   const descriptionId = useId();
