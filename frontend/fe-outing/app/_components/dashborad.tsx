@@ -1,5 +1,5 @@
 "use client";
-import { Copy, Eye, X } from "lucide-react";
+import { Copy, Eye, MapPin, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -278,7 +278,7 @@ function SentFormDialog({ handleSentForm }: { handleSentForm: () => void }) {
   return (
     <Dialog >
       <DialogTrigger>
-      <Button>Sent Form</Button>
+      <Button> <Copy className="w-4 h-4" /> Sent Form</Button>
       </DialogTrigger>
       <DialogContent className="gap-4 p-6 text-black">
         <DialogHeader>
@@ -297,7 +297,7 @@ function SentFormDialog({ handleSentForm }: { handleSentForm: () => void }) {
 
 export function Dashboard() {
   const [filter, setFilter] = useState<Filter>(emptyFilter());
-
+  const router = useRouter();
   const {
     data: registrations,
     isLoading,
@@ -422,7 +422,12 @@ export function Dashboard() {
     <div className="flex flex-col gap-4 bg-card p-6 rounded-md">
       <div className="flex flex-row gap-4 items-center justify-between">
         <h1 className="text-2xl font-bold text-black">Registration Dashboard</h1>
-        <SentFormDialog handleSentForm={handleSentForm} />
+        <div className="flex flex-row gap-4 items-center justify-end">
+          <Button onClick={() => {
+            router.push("/manage-locations");
+          }} variant="outline"> <MapPin className="w-4 h-4" /> Manage Locations</Button>
+          <SentFormDialog handleSentForm={handleSentForm} />
+        </div>
       </div>
       
       <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>

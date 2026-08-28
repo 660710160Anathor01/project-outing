@@ -1,4 +1,4 @@
-import { ApiError } from "./registration-type";
+import { ApiError, CreateLocationInput, UpdateLocationInput } from "./registration-type";
 import { 
     Location, 
     Registration, 
@@ -67,7 +67,12 @@ function toMessages(body: unknown, status: number): string[] {
   
     return body;
   }
-  
+
+  function buildLocationBody<T extends UpdateLocationInput>(input: T): T {
+    const body = compact(input);
+    return body;
+  }
+
   export function getLocations(signal?: AbortSignal) {
     return request<Location[]>("/locations", { signal });
   }
@@ -107,4 +112,20 @@ function toMessages(body: unknown, status: number): string[] {
   /** Soft delete — the row survives with status CANCELLED and is returned. */
   export function cancelRegistration(id: string, signal?: AbortSignal) {
     return request<Registration>(`/registrations/${id}`, { method: "DELETE", signal });
+  }
+
+  export function createLocation(input: CreateLocationInput, signal?: AbortSignal) {
+    return request<Location>("/locations", {
+      method: "POST",
+      body: buildLocationBody(input),
+      signal,
+    });
+  }
+  
+  export function updateLocation(id: string, input: UpdateLocationInput, signal?: AbortSignal) {
+    return request<Location>(`/locations/${id}`, { method: "PATCH", body: buildLocationBody(input), signal });
+  }
+
+  export function deleteLocation(id: string, signal?: AbortSignal) {
+    return request<Location>(`/locations/${id}`, { method: "DELETE", signal });
   }

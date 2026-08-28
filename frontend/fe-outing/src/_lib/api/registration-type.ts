@@ -66,6 +66,34 @@ export type CreateRegistrationInput = {
   note?: string;
 };
 
+export type Location = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  beds: number;
+  residentCapacity: number;
+  carparkCapacity: number;
+  mapUrl: string | null;
+  imageUrl: string | null;
+  sourceUrl: string | null;
+}
+
+export type CreateLocationInput = {
+  name: string;
+  description?: string;
+  address: string;
+  beds: number;
+  residentCapacity: number;
+  carparkCapacity: number;
+  mapUrl?: string;
+  sourceUrl?: string;
+  imageUrl?: string[];
+};
+
+
+export type UpdateLocationInput = Partial<CreateLocationInput>;
+
 export type UpdateRegistrationInput = Partial<CreateRegistrationInput> & {
   status?: RegistrationStatus;
 };
