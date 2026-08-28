@@ -2,15 +2,17 @@ import { Transform, Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
-  IsEnum,
+  IsBoolean,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-
+  IsUUID,
   Length,
   Matches,
   MaxLength,
+  Min,
   ValidateNested,
 } from "class-validator";
 import {
@@ -44,16 +46,27 @@ export class UpdateRegistrationDto {
   @MaxLength(60)
   lineId?: string;
 
-
+  @Transform(({ value }) => trim(value))
+  @IsOptional()
+  @IsUUID()
+  locationId?: string;
 
   @IsOptional()
-  @IsString()
   @IsIn(["SELF_DRIVE", "CAR_SHARE", "PUBLIC_TRANSPORT"], {
     message:
       "travelOption must be one of SELF_DRIVE, CAR_SHARE, PUBLIC_TRANSPORT",
   })
   travelOption?: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
 
+  @IsOptional()
+  @IsBoolean()
+  carShare?: boolean;
+
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  emptySeats?: number;
 
   @IsOptional()
   @IsArray()
@@ -65,7 +78,12 @@ export class UpdateRegistrationDto {
   @Transform(({ value }) => trimToUndefined(value))
   @IsOptional()
   @IsString()
+  @MaxLength(500)
+  address?: string;
+
+  @Transform(({ value }) => trimToUndefined(value))
+  @IsOptional()
+  @IsString()
   @MaxLength(1000)
   note?: string;
-
 }

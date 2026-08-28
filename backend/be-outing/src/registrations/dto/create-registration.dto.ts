@@ -2,6 +2,7 @@ import { Transform, Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsOptional,
@@ -47,18 +48,30 @@ export class CreateRegistrationDto {
   @MaxLength(120)
   locationId!: string;
 
-  @IsString()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => CompanionDto)
+  companions!: CompanionDto[];
+
   @IsIn(["SELF_DRIVE", "CAR_SHARE", "PUBLIC_TRANSPORT"], {
     message:
       "travelOption must be one of SELF_DRIVE, CAR_SHARE, PUBLIC_TRANSPORT",
   })
   travelOption!: "SELF_DRIVE" | "CAR_SHARE" | "PUBLIC_TRANSPORT";
 
-  @IsArray()
-  @ArrayMaxSize(10)
-  @ValidateNested({ each: true })
-  @Type(() => CompanionDto)
-  companions!: CompanionDto[];
+  @IsBoolean()
+  carShare!: boolean;
+
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  emptySeats?: number;
+
+  @Transform(({ value }) => trimToUndefined(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  address?: string;
 
   @Transform(({ value }) => trimToUndefined(value))
   @IsOptional()

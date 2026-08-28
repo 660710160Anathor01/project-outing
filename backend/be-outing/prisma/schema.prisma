@@ -17,6 +17,8 @@ model Location {
   beds             Int      @default(0)
   residentCapacity Int      @default(0)
   carparkCapacity  Int      @default(0)
+  mapUrl           String?
+  sourceUrl        String?
   imageUrl         String[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -31,7 +33,6 @@ model Form {
   phone              String
   lineId             String?
   locationId         String
-  follower           Int      @default(0)
   companions         Json     @default("[]")
   travelOption       String   @default("SELF_DRIVE")
   carShare           Boolean  @default(false)

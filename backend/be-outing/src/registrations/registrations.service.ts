@@ -16,30 +16,39 @@ export class RegistrationsService {
     const registrationNumber =
       `OUT-${new Date().getFullYear()}-${Date.now()}`;
 
-      return this.prisma.form.create({
-        data: {
-          registrationNumber,
-          name: dto.name,
-          phone: dto.phone,
-          lineId: dto.lineId ?? null,
-          locationId: dto.locationId,
-          follower: companions.length,
-          companions: companions.map((companion) => ({
-            name: companion.name,
-            phone: companion.phone ?? "",
-            relationship: companion.relationship ?? "",
-          })),
-          travelOption: dto.travelOption,
-          note: dto.note ?? null,
-          status: "PENDING",
-        },
-      });
-      
+    return this.prisma.form.create({
+      data: {
+        registrationNumber,
+
+        name: dto.name,
+        phone: dto.phone,
+        lineId: dto.lineId ?? null,
+        locationId: dto.locationId,
+
+        companions: companions.map((companion) => ({
+          name: companion.name,
+          phone: companion.phone ?? "",
+          relationship: companion.relationship ?? "",
+        })),
+
+        travelOption: dto.travelOption,
+        carShare: dto.carShare ?? false,
+        emptySeats: dto.emptySeats ?? 0,
+
+        address: dto.address ?? null,
+        note: dto.note ?? null,
+
+        status: "PENDING",
+      },
+    });
   }
-  
 
   async findAll() {
-    return this.prisma.form.findMany();
+    return this.prisma.form.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 
   async findOne(id: string) {
@@ -82,10 +91,12 @@ export class RegistrationsService {
           lineId: dto.lineId,
         }),
 
+        ...(dto.locationId !== undefined && {
+          locationId: dto.locationId,
+        }),
 
 
         ...(dto.companions !== undefined && {
-          follower: dto.companions.length,
           companions: dto.companions.map((companion) => ({
             name: companion.name,
             phone: companion.phone ?? "",
@@ -93,10 +104,25 @@ export class RegistrationsService {
           })),
         }),
 
+        ...(dto.travelOption !== undefined && {
+          travelOption: dto.travelOption,
+        }),
+
+        ...(dto.carShare !== undefined && {
+          carShare: dto.carShare,
+        }),
+
+        ...(dto.emptySeats !== undefined && {
+          emptySeats: dto.emptySeats,
+        }),
+
+        ...(dto.address !== undefined && {
+          address: dto.address ?? null,
+        }),
+
         ...(dto.note !== undefined && {
           note: dto.note ?? null,
         }),
-
       },
     });
   }
