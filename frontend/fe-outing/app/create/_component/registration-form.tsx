@@ -543,6 +543,10 @@ export default function RegistrationForm() {
     setRegForm(emptyForm());
   };
 
+  const handleCancel = () => {
+    router.push("/");
+  };
+
   const visibleErrors = submitAttempted
     ? Object.values(errors)
     : Array.from(touched)
@@ -1106,7 +1110,13 @@ export default function RegistrationForm() {
             </Field>
           </FormSection>
 
-          <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row sm:justify-end">
+          <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row justify-between">
+            <div className="flex justify-end mb-4">
+              <Button variant="secondary" size="md" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </div>
+            <div className="flex justify-end mb-4 gap-4">
             <Button
               type="button"
               variant="ghost"
@@ -1149,6 +1159,7 @@ export default function RegistrationForm() {
                 )}
               </Button>
             </ConformationDialog>
+            </div>
           </CardFooter>
         </form>
       </CardContent>
