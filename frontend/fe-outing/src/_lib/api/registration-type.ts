@@ -29,6 +29,7 @@ export type Location = {
   mapUrl: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
+  status: string;
 }
 
 export type Registration = {

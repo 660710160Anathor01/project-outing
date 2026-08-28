@@ -2,7 +2,14 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, Lock, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  MapPinPlus,
+  UserRound,
+} from "lucide-react";
 
 import {
   Card,
@@ -13,13 +20,20 @@ import {
   CardFooter,
 } from "../../src/_component/card-template";
 import { Button } from "../../src/_component/button";
-import { login } from "../../src/_lib/api/registrationService";
-import type { LoginInput } from "../../src/_lib/api/registration-type";
+import { login, createLocation } from "../../src/_lib/api/registrationService";
+import type {
+  LoginInput,
+  CreateLocationInput,
+} from "../../src/_lib/api/registration-type";
 import {
   Field,
   FormSection,
   TextInput,
 } from "../create/_component/form-fields";
+import {
+  LocationFormDialog,
+  type LocationFormValues,
+} from "../manage-locations/_component/location-form-dialog";
 
 type FormErrors = Record<string, string>;
 type Role = "admin" | "USER";
@@ -54,6 +68,13 @@ export default function LoginPage() {
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const [locationFormOpen, setLocationFormOpen] = useState(false);
+  const [locationFormError, setLocationFormError] = useState<string | null>(
+    null,
+  );
+  const [isCreatingLocation, setIsCreatingLocation] = useState(false);
+  const [locationSuccessOpen, setLocationSuccessOpen] = useState(false);
 
   const validateAndSetField = (fieldKey: string, form: LoginInput) => {
     const allErrors = validateForm(form);
@@ -158,8 +179,39 @@ export default function LoginPage() {
     });
   };
 
+  const handleOpenLocationForm = () => {
+    setLocationFormError(null);
+    setLocationFormOpen(true);
+  };
+
+  const handleLocationFormOpenChange = (open: boolean) => {
+    setLocationFormOpen(open);
+    if (!open) {
+      setLocationFormError(null);
+    }
+  };
+
+  const handleLocationFormSubmit = (values: LocationFormValues) => {
+    setIsCreatingLocation(true);
+    setLocationFormError(null);
+
+    createLocation(values as CreateLocationInput)
+      .then(() => {
+        setLocationFormOpen(false);
+        setLocationSuccessOpen(true);
+      })
+      .catch((error: Error) => {
+        setLocationFormError(
+          error.message || "Failed to create the location. Please try again.",
+        );
+      })
+      .finally(() => {
+        setIsCreatingLocation(false);
+      });
+  };
+
   return (
-    <Card className="w-full max-w-md rounded-xl border-line bg-card text-card-foreground shadow-sm">
+    <Card className="w-full max-w-md h-150 rounded-xl border-line bg-card text-card-foreground shadow-sm">
       <CardHeader className="space-y-2 pb-4">
         <CardTitle className="text-2xl font-semibold tracking-tight">
           Sign in
@@ -172,7 +224,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-8">
+      <CardContent className="flex flex-col justify-between gap-8 h-110">
         <div
           role="group"
           aria-label="Sign in as"
@@ -201,7 +253,7 @@ export default function LoginPage() {
             Login as User
           </Button>
         </div>
-
+        <div>
         {role === "USER" && (
           <form
             ref={formRef}
@@ -211,6 +263,15 @@ export default function LoginPage() {
             className="flex flex-col gap-8"
           >
             <Button onClick={handleUserLogin}>Outing Registration</Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleOpenLocationForm}
+            >
+              <MapPinPlus className="h-4 w-4" aria-hidden="true" />
+              Suggest a location
+            </Button>
           </form>
         )}
 
@@ -273,6 +334,15 @@ export default function LoginPage() {
               </p>
             )}
 
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleOpenLocationForm}
+            >
+              <MapPinPlus className="h-4 w-4" aria-hidden="true" />
+              Sugg location
+            </Button>
+
             <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row sm:justify-end">
               <Button
                 type="button"
@@ -310,7 +380,65 @@ export default function LoginPage() {
             </CardFooter>
           </form>
         )}
+        </div>
       </CardContent>
+
+      <LocationFormDialog
+        open={locationFormOpen}
+        onOpenChange={handleLocationFormOpenChange}
+        location={null}
+        isSubmitting={isCreatingLocation}
+        errorMessage={locationFormError ?? undefined}
+        onSubmit={handleLocationFormSubmit}
+      />
+
+      {locationSuccessOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onClick={() => setLocationSuccessOpen(false)}
+        >
+          <Card
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="location-success-title"
+            aria-describedby="location-success-description"
+            className="w-full max-w-sm rounded-xl border-line bg-card text-card-foreground shadow-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardHeader className="items-center gap-2 pb-2 text-center">
+              <CheckCircle2
+                className="h-10 w-10 text-green-600 dark:text-green-400"
+                aria-hidden="true"
+              />
+              <CardTitle
+                id="location-success-title"
+                className="text-lg font-semibold tracking-tight"
+              >
+                Location suggested
+              </CardTitle>
+              <CardDescription
+                id="location-success-description"
+                className="text-base text-muted"
+              >
+                Thanks! Your location suggestion has been submitted for
+                review.
+              </CardDescription>
+            </CardHeader>
+
+            <CardFooter className="flex justify-center p-0 pt-4">
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                onClick={() => setLocationSuccessOpen(false)}
+              >
+                Close
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
     </Card>
   );
 }
