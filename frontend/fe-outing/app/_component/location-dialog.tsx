@@ -17,6 +17,8 @@ import {
   ImageOff,
   Loader2,
   MapPin,
+  Pencil,
+  Trash2,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +28,7 @@ import {
   DialogTitle,
   DialogCloseIconButton,
 } from "@/src/_component/dialog";
+import { Button } from "@/src/_component/button";
 import type { Location } from "@/src/_lib/api/registration-type";
 
 const DESCRIPTION_CLAMP_THRESHOLD = 180;
@@ -43,6 +46,11 @@ export type LocationDetailDialogProps = {
   ctaLabel?: string;
   onSelect?: (id: string) => void;
   onViewMap?: (location: Location) => void;
+  isSelect?: boolean;
+  onEdit?: (location: Location) => void;
+  onDelete?: (location: Location) => void;
+  onApprove?: (location: Location) => void;
+  isApproving?: boolean;
 };
 
 function pluralize(count: number, singular: string, plural?: string): string {
@@ -401,6 +409,11 @@ export function LocationDetailDialog({
   ctaLabel = "Select this location",
   onSelect,
   onViewMap,
+  isSelect,
+  onEdit,
+  onDelete,
+  onApprove,
+  isApproving = false,
 }: LocationDetailDialogProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -558,7 +571,78 @@ export function LocationDetailDialog({
                   </p>
                 )}
 
-                <button
+                {(onEdit || onDelete || onApprove) && (
+                  <div className="flex gap-2 justify-between">
+                    {location.status === "PENDING" ? (
+                      <>
+                        {onEdit && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEdit(location)}
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                            Edit
+                          </Button>
+                        )}
+                        <div className="flex gap-2 justify-end">
+                          {onDelete && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onDelete(location)}
+                              className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              Cancel
+                            </Button>
+                          )}
+                          {onApprove && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => onApprove(location)}
+                              disabled={isApproving}
+                            >
+                              Approve
+                            </Button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {onEdit && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEdit(location)}
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                            Edit
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onDelete(location)}
+                            className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {isSelect ? (
+                  <button
                   type="button"
                   onClick={handleSelect}
                   disabled={ctaDisabled}
@@ -603,6 +687,7 @@ export function LocationDetailDialog({
                     </>
                   )}
                 </button>
+                ) : null}
               </div>
             </div>
           </>

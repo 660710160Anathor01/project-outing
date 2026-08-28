@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
 import { LocationsModule } from './locations/locations.module';
+import { LoginModule } from './login/login.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 
@@ -30,6 +31,7 @@ import { RegistrationsModule } from './registrations/registrations.module';
     PrismaModule,
     LocationsModule,
     RegistrationsModule,
+    LoginModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

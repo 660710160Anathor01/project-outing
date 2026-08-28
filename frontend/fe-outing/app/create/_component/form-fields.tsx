@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { LocationDetailDialog } from "./location-dialog";
+import { LocationDetailDialog } from "../../_component/location-dialog";
 import { Location } from "@/src/_lib/api/registration-type";
 
 const inputBase =
@@ -171,6 +171,7 @@ export type RadioCardOption = {
   badge?: string; // e.g. "Available now"
   meta?: string; // e.g. "Max. 15 seats  |  10 m2"
   amenities?: IconComponent[]; // small icons over the image, e.g. [Camera, Bluetooth]
+  status?: "PENDING" | "APPROVED";
 };
 
 type RadioCardGroupProps = {
@@ -350,6 +351,7 @@ function toLocation(option: RadioCardOption): Location {
     mapUrl: option.mapUrl ?? null,
     imageUrl: option.imageUrl ?? null,
     sourceUrl: option.sourceUrl ?? null,
+    status: option.status ?? "PENDING",
   };
 }
 
@@ -490,6 +492,7 @@ function ImageRadioCard({
         location={location}
         isSelected={checked}
         onSelect={(id) => onChange(id)}
+        isSelect={true}
       />
     </div>
   );

@@ -71,4 +71,9 @@ export class UpdateLocationDto {
   @ArrayMaxSize(20)
   @IsString({ each: true })
   imageUrl?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  status?: string;
 }

@@ -290,18 +290,22 @@ export default function RegistrationForm() {
     queryFn: () => getLocations(),
   });
   
-  const LOCATIONS = locations.data?.map((location) => ({
-    value: location.id,
-    label: location.name,
-    description: location.description ?? "",
-    mapUrl: location.mapUrl ?? "",
-    imageUrl: location.imageUrl ?? "",
-    sourceUrl: location.sourceUrl ?? "",
-    address: location.address ?? "",
-    beds: location.beds,
-    residentCapacity: location.residentCapacity,
-    carparkCapacity: location.carparkCapacity,
-  })) ?? [];
+  const LOCATIONS =
+  locations.data
+    ?.filter((location) => location.status === "APPROVED")
+    .map((location) => ({
+      value: location.id,
+      label: location.name,
+      description: location.description ?? "",
+      mapUrl: location.mapUrl ?? "",
+      imageUrl: location.imageUrl ?? "",
+      sourceUrl: location.sourceUrl ?? "",
+      address: location.address ?? "",
+      beds: location.beds,
+      residentCapacity: location.residentCapacity,
+      carparkCapacity: location.carparkCapacity,
+    })) ?? [];
+
 
   const validateAndSetField = useCallback(
     (

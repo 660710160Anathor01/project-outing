@@ -1,16 +1,16 @@
 export type RegistrationStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
 
 /** Dates arrive as ISO strings over JSON, not Date objects. */
-// export type Location = {
-//   id: string;
-//   name: string;
-//   description: string | null;
-//   imageUrl: string | null;
-//   startDate: string | null;
-//   endDate: string | null;
-//   createdAt: string;
-//   updatedAt: string;
-// };
+export type LoginInput = {
+  userName: string;
+  pass: string;
+};
+
+export type LoginResponse = {
+  token: string;
+  role: string;
+  expiresIn: number;
+};
 
 export type Companion = {
   name: string;
@@ -29,6 +29,7 @@ export type Location = {
   mapUrl: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
+  status: string;
 }
 
 export type Registration = {

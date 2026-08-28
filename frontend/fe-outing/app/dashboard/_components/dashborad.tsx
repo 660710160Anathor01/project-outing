@@ -3,16 +3,16 @@ import { Copy, Eye, MapPin, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-import { getAllRegistrations, getLocations } from "../../src/_lib/api/registrationService";
+import { getAllRegistrations, getLocations } from "../../../src/_lib/api/registrationService";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from "../../src/_component/card-template";
+} from "../../../src/_component/card-template";
 import { Registration } from "@/src/_lib/api/registration-type";
 import { useState } from "react";
-import Loading from "../loading";
+import Loading from "../../loading";
 import { Button } from "@/src/_component/button";
 import { Dialog, DialogHeader, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/src/_component/dialog";
 

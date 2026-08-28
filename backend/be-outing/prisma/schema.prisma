@@ -9,6 +9,15 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id               String   @id @default(uuid()) @db.Uuid
+  userName         String   @unique
+  pass             String
+  role             String   @default("USER")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model Location {
   id               String   @id @default(uuid()) @db.Uuid
   name             String   @unique
@@ -20,6 +29,7 @@ model Location {
   mapUrl           String?
   sourceUrl        String?
   imageUrl         String[]
+  status           String   @default("PENDING")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
