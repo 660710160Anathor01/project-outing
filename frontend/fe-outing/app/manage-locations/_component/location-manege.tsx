@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 
 import {
   getLocations,
@@ -27,10 +27,11 @@ import {
   type LocationFormValues,
 } from "./location-form-dialog";
 import { DeleteLocationDialog } from "./delete-location-dialog";
+import { useRouter } from "next/navigation";
 
 export function LocationManage() {
   const queryClient = useQueryClient();
-
+  const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(
     null,
@@ -151,8 +152,13 @@ export function LocationManage() {
   return (
     <div className="flex flex-col gap-6 bg-card p-6 rounded-md">
       <div className="flex items-center justify-between gap-4">
+      
         <div>
-          <h1 className="text-2xl font-bold text-black">Manage locations</h1>
+            <Button variant="outline" onClick={() => router.push("/")}>
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+              Back
+            </Button>
+          <h1 className="text-2xl font-bold text-black mt-4">Manage locations</h1>
           <p className="text-sm text-gray-500">
             Add, edit, or remove the destinations attendees can choose from.
           </p>
