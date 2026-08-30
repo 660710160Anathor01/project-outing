@@ -211,7 +211,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md rounded-xl border-line bg-card text-card-foreground shadow-sm">
+    <Card className="w-full my-8 max-w-md rounded-xl border-line bg-card text-card-foreground shadow-sm">
       <CardHeader className="space-y-2 pb-4">
         <CardTitle className="text-2xl font-semibold tracking-tight">
           Sign in
@@ -220,7 +220,7 @@ export default function LoginPage() {
         <CardDescription className="text-base text-muted">
           {role === "admin"
             ? "Enter your username and password to access the dashboard."
-            : "Continue as a guest to start a new registration, or sign in as an admin."}
+            : "Continue as a user to start a new registration, or sign in as an admin."}
         </CardDescription>
       </CardHeader>
 
@@ -340,19 +340,10 @@ export default function LoginPage() {
               onClick={handleOpenLocationForm}
             >
               <MapPinPlus className="h-4 w-4" aria-hidden="true" />
-              Sugg location
+              Suggest a location
             </Button>
 
             <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                onClick={handleClear}
-                disabled={isPending}
-              >
-                Clear
-              </Button>
 
               <Button
                 type="submit"

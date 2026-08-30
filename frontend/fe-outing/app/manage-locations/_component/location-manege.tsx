@@ -211,7 +211,7 @@ export function LocationManage() {
       <div className="flex items-center justify-between gap-4">
       
         <div>
-            <Button variant="outline" onClick={() => router.push("/")}>
+            <Button variant="outline" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back
             </Button>

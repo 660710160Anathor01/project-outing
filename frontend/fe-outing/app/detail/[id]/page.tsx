@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -191,6 +191,23 @@ export default function DetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    // const role = "user";
+    console.log("token", token);
+    console.log("role", role);
+
+    if (!token || role !== "admin") {
+    console.log("token", token);
+      router.replace("/");
+      return;
+    }
+
+  }, [router]);
+
 
   const registration = useQuery({
     queryKey: ["registration", id],
@@ -234,13 +251,15 @@ export default function DetailPage({
   const locationName = locationMapping[data.locationId];
   const companionCount = data.companions?.length ?? 0;
 
+
+
   return (
-    <div className="min-h-screen bg-[#F8F5F0] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-surface px-3 py-5 sm:px-4 sm:py-8 md:py-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div>
-            <Button variant="outline" onClick={() => router.push("/")}>
+            <Button variant="outline" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back
             </Button>

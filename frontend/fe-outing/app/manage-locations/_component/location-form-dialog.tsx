@@ -98,7 +98,7 @@ function validate(form: FormState): FormErrors {
 
   const beds = Number(form.beds);
   if (form.beds.trim() === "" || Number.isNaN(beds) || beds < 0) {
-    errors.beds = "Enter a valid number of beds";
+    errors.beds = "Enter a valid number of bed rooms";
   }
 
   const residentCapacity = Number(form.residentCapacity);
@@ -261,7 +261,7 @@ export function LocationFormDialog({
                 htmlFor="location-beds"
                 className="text-sm font-medium text-black"
               >
-                Beds<span className="text-red-500"> *</span>
+                Bed rooms<span className="text-red-500"> *</span>
               </label>
               <input
                 id="location-beds"

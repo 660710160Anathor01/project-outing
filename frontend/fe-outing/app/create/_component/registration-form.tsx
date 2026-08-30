@@ -1110,7 +1110,7 @@ export default function RegistrationForm() {
             </Field>
           </FormSection>
 
-          <CardFooter className="flex flex-col-reverse gap-3 p-0 sm:flex-row justify-between">
+          <CardFooter className="flex gap-3 p-0 sm:flex-row justify-between">
             <div className="flex justify-end mb-4">
               <Button variant="secondary" size="md" onClick={handleCancel}>
                 Cancel
@@ -1123,7 +1123,7 @@ export default function RegistrationForm() {
               size="md"
               onClick={handleClear}
             >
-              Clear form
+              Clear
             </Button>
 
             <ConformationDialog
@@ -1150,7 +1150,7 @@ export default function RegistrationForm() {
                   </>
                 ) : (
                   <>
-                    Complete registration
+                    Complete
                     <ArrowRight
                       className="h-4 w-4"
                       aria-hidden="true"

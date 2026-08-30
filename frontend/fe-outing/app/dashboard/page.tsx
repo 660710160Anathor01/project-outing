@@ -13,8 +13,6 @@ export default function Home() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     // const role = "user";
-    console.log("token", token);
-    console.log("role", role);
 
     if (!token || role !== "admin") {
     console.log("token", token);
@@ -30,7 +28,7 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-surface p-8">
+    <div className="relative min-h-screen bg-surface px-3 py-5 sm:px-4 sm:py-8 md:py-12">
         <div className="flex justify-end mb-4">
             <Logout />
         </div>
