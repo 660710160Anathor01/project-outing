@@ -373,7 +373,7 @@ export default function DetailPage({
 
         {/* Car sharing (conditional) */}
         {data.carShare && (
-          <Section title="Car Sharing" icon={Car} tone="soft">
+          <Section title="Car Sharing" icon={Car}>
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2">
                 {data.emptySeats != null && data.emptySeats > 0 && (
                     <DetailField label="Empty Seats" value={data.emptySeats} />
