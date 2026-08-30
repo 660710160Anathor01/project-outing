@@ -30,7 +30,7 @@ export default function LocationManagePage() {
       return null;
     }
     return (
-        <div className="bg-surface p-8">
+        <div className="relative min-h-screen bg-surface px-3 py-5 sm:px-4 sm:py-8 md:py-12">
             <div className="flex justify-end mb-4">
                 <Logout />
             </div>

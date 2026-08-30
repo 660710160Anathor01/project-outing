@@ -50,6 +50,7 @@ type RegistrationFilterProps = {
 function SummaryCard({
   submitted,
   mostTravelOption,
+  totalEmptySeats,
   selfDriveCount,
   carShareCount,
   companionsCount,
@@ -58,6 +59,7 @@ function SummaryCard({
 }: {
   submitted: number;
   mostTravelOption: string;
+  totalEmptySeats: number;
   selfDriveCount: number;
   carShareCount: number;
   companionsCount: number;
@@ -74,7 +76,14 @@ function SummaryCard({
           <h1>{submitted}</h1>
         </CardContent>
       </Card>
-
+      <Card>
+        <CardHeader>
+          <CardTitle>Most Location Picked</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <h1>{locationMapping?.[mostLocationPicked] ?? '-'}</h1>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Most Travel Option</CardTitle>
@@ -101,10 +110,10 @@ function SummaryCard({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Most Location Picked</CardTitle>
+          <CardTitle>Total Empty Seats</CardTitle>
         </CardHeader>
         <CardContent>
-          <h1>{locationMapping?.[mostLocationPicked] ?? '-'}</h1>
+          <h1>{totalEmptySeats}</h1>
         </CardContent>
       </Card>
       <Card>
@@ -217,59 +226,96 @@ function RegistrationTable({
   return (
     <div>
       <h1 className="text-2xl font-bold text-black">Registration List</h1>
-    <div className="text-black border-2 border-gray-300 rounded-md p-4 my-4">
-
-      <table className="w-full">
-        <thead>
-          <tr className="text-right border-b-2 border-gray-300 grid grid-cols-8">
-            <th className="p-2 col-span-1">Name</th>
-            <th className="p-2 col-span-1">Phone</th>
-            <th className="p-2 col-span-1">Line ID</th>
-            <th className="p-2 col-span-1">Location</th>
-            <th className="p-2 col-span-1">Travel Option</th>
-            <th className="p-2 col-span-1">Companions</th>
-            <th className="p-2 col-span-1">Note</th>
-            <th className="p-2 col-span-1">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registrations.length === 0 ? (
-            <tr className="grid grid-cols-1">
-              <td className="p-4 text-center text-gray-500">
-                No registrations match your filters.
-              </td>
+    
+      <div className="w-full max-w-full text-black border-2 border-gray-300 rounded-md p-4 my-4 overflow-x-auto">
+        <table className="w-full min-w-[1200px] table-fixed">
+          <thead>
+            <tr className="text-right border-b-2 border-gray-300">
+              <th className="p-2 w-[10%]">Name</th>
+              <th className="p-2 w-[10%]">Phone</th>
+              <th className="p-2 w-[10%]">Line ID</th>
+              <th className="p-2 w-[10%]">Location</th>
+              <th className="p-2 w-[10%]">Travel Option</th>
+              <th className="p-2 w-[10%]">Car Shared</th>
+              <th className="p-2 w-[10%]">Empty Seats</th>
+              <th className="p-2 w-[10%]">Companions</th>
+              <th className="p-2 w-[10%]">Note</th>
+              <th className="p-2 w-[10%]">Actions</th>
             </tr>
-          ) : (
-            registrations.map((registration, index) => (
-              <tr
-                key={index}
-                className="grid grid-cols-8 text-right items-center justify-center"
-              >
-                <td className="p-2 col-span-1">{registration.name ?? "-"}</td>
-                <td className="p-2 col-span-1">{registration.phone ?? "-"}</td>
-                <td className="p-2 col-span-1">{registration.lineId ?? "-"}</td>
-                <td className="p-2 col-span-1">{locationMapping[registration.locationId] ?? "-"}</td>
-                <td className="p-2 col-span-1">{TravelOptionMapping[registration.travelOption] ?? "-"}</td>
-                <td className="p-2 col-span-1">{registration.companions?.length ?? "-"}</td>
-                <td className="p-2 col-span-1">{registration.note ?? "-"}</td>
-                <td className="p-2 col-span-1">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      router.push(`/detail/${registration.id}`);
-                    }}
-                  >
-                    <Eye className="w-4 h-4" />
-                    View
-                  </Button>
+          </thead>
+
+          <tbody>
+            {registrations.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="p-4 text-center text-gray-500"
+                >
+                  No registrations match your filters.
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+            ) : (
+              registrations.map((registration, index) => (
+                <tr
+                  key={index}
+                  className="text-right items-center border-b border-gray-200"
+                >
+                  <td className="p-2 break-words">
+                    {registration.name ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.phone ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.lineId ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {locationMapping[registration.locationId] ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {TravelOptionMapping[registration.travelOption] ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.carShare ? "Yes" : "No"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.emptySeats ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.companions?.length ?? "-"}
+                  </td>
+
+                  <td className="p-2 break-words">
+                    {registration.note ?? "-"}
+                  </td>
+
+                  <td className="p-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        router.push(`/detail/${registration.id}`);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+
     </div>
   );
 }
@@ -379,6 +425,10 @@ export function Dashboard() {
       ["-", 0],
     )[0];
 
+  const totalEmptySeats = filteredRegistrations.reduce((acc, curr) => {
+    return acc + (curr.emptySeats ?? 0);
+  }, 0);
+
   const selfDriveCount = filteredRegistrations.reduce((acc, curr) => {
     if (curr.travelOption === "SELF_DRIVE") {
       return acc + 1;
@@ -414,6 +464,8 @@ export function Dashboard() {
       ["-", 0],
     )[0] as string;
 
+  const pendingLocations = locations?.filter((location) => location.status === "PENDING").length ?? 0;
+
   const handleSentForm = () => {
     window.navigator.clipboard.writeText(window.location.origin + "/create");
   }
@@ -422,10 +474,12 @@ export function Dashboard() {
     <div className="flex flex-col gap-4 bg-card p-6 rounded-md">
       <div className="flex flex-row gap-4 items-center justify-between">
         <h1 className="text-2xl font-bold text-black">Registration Dashboard</h1>
-        <div className="flex flex-row gap-4 items-center justify-end">
+        <div className="flex flex-col-reverse md:flex-row gap-4 items-center justify-end">
           <Button onClick={() => {
             router.push("/manage-locations");
-          }} variant="outline"> <MapPin className="w-4 h-4" /> Manage Locations</Button>
+          }} variant="outline"> <MapPin className="w-4 h-4" /> Manage Locations
+          {pendingLocations > 0 && <span className="text-xs text-white bg-red-500 rounded-full px-2 py-1">{pendingLocations}</span>}
+          </Button>
           <SentFormDialog handleSentForm={handleSentForm} />
         </div>
       </div>
@@ -434,6 +488,7 @@ export function Dashboard() {
       <SummaryCard
         submitted={submittedRegistrations}
         mostTravelOption={mostTravelOption}
+        totalEmptySeats={totalEmptySeats}
         selfDriveCount={selfDriveCount}
         carShareCount={carShareCount}
         companionsCount={companionsCount}

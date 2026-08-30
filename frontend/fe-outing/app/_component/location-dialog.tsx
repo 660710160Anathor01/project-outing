@@ -345,8 +345,8 @@ function LocationStats({ location }: { location: Location }) {
   if (location.beds > 0) {
     stats.push({
       icon: BedDouble,
-      label: "Beds",
-      value: pluralize(location.beds, "bed"),
+      label: "Bed rooms",
+      value: pluralize(location.beds, "bed rooms"),
     });
   }
 
