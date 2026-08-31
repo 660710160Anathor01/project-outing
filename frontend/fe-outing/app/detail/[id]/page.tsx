@@ -350,7 +350,7 @@ export default function DetailPage({
 
               <div className="flex flex-col gap-1">
                 <span className="text-[13px] font-medium text-[#756C68]">
-                  Car Share
+                  Can take others?
                 </span>
                 <span className="inline-flex w-fit items-center gap-1.5 text-[15px] font-medium text-[#29211E]">
                   {data.carShare ? (

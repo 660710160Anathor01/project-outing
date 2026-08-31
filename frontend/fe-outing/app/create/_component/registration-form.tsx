@@ -84,6 +84,8 @@ const FIELD_FOCUS_ORDER = [
   "phone",
   "lineId",
   "travelOption",
+  "emptySeats",
+  "address",
   "note",
 ] as const;
 
@@ -106,6 +108,7 @@ const emptyForm = (): RegistrationFormData => ({
   address: "",
   note: "",
 });
+
 function normalizePhone(value: string): string {
   const compact = value.replace(/[\s\-().]/g, "");
 
@@ -145,28 +148,51 @@ function validateForm(form: RegistrationFormData): FormErrors {
     errors.phone = "Enter a valid Thai phone number, e.g. 0812345678";
   }
 
-  if (form.carShare === true) {
+  /*
+   * CAR_SHARE
+   * --------------------------------
+   * carShare ต้องเป็น false
+   * แต่ address ยังเป็น required
+   */
+  if (form.travelOption === "CAR_SHARE") {
     const trimmedAddress = (form.address ?? "").trim();
 
     if (!trimmedAddress) {
-      errors.address = "Address is required";
+      errors.address = "Pickup address is required";
     } else if (trimmedAddress.length < 10) {
-      errors.address = "Address must be at least 10 characters";
+      errors.address = "Pickup address must be at least 10 characters";
+    }
+  }
+
+  /*
+   * SELF_DRIVE + Able to take other people
+   * --------------------------------
+   * carShare = true
+   * ต้องมี emptySeats และ address
+   */
+  if (
+    form.travelOption === "SELF_DRIVE" &&
+    form.carShare === true
+  ) {
+    const seatsValue = form.emptySeats;
+    const seats = Number(seatsValue);
+
+    if (
+      seatsValue === undefined ||
+      seatsValue === null ||
+      `${seatsValue}`.trim() === "" ||
+      Number.isNaN(seats) ||
+      seats <= 0
+    ) {
+      errors.emptySeats = "Enter the number of empty seats";
     }
 
-    if (form.travelOption === "SELF_DRIVE") {
-      const seatsValue = form.emptySeats;
-      const seats = Number(seatsValue);
+    const trimmedAddress = (form.address ?? "").trim();
 
-      if (
-        seatsValue === undefined ||
-        seatsValue === null ||
-        `${seatsValue}`.trim() === "" ||
-        Number.isNaN(seats) ||
-        seats <= 0
-      ) {
-        errors.emptySeats = "Enter the number of empty seats";
-      }
+    if (!trimmedAddress) {
+      errors.address = "Pickup address is required";
+    } else if (trimmedAddress.length < 10) {
+      errors.address = "Pickup address must be at least 10 characters";
     }
   }
 
@@ -212,7 +238,10 @@ const clearErrorsWithPrefix = (
   return next;
 };
 
-const clearError = (errors: FormErrors, key: string): FormErrors => {
+const clearError = (
+  errors: FormErrors,
+  key: string,
+): FormErrors => {
   if (!errors[key]) return errors;
 
   const next = { ...errors };
@@ -248,9 +277,7 @@ function focusField(
 ) {
   if (fieldKey === "locationId") {
     document
-      .getElementById(
-        `locationId-${form.locationId}`,
-      )
+      .getElementById(`locationId-${form.locationId}`)
       ?.focus();
 
     return;
@@ -275,7 +302,8 @@ export default function RegistrationForm() {
   const [regForm, setRegForm] =
     useState<RegistrationFormData>(emptyForm);
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] =
+    useState<FormErrors>({});
 
   const [touched, setTouched] =
     useState<Set<string>>(new Set());
@@ -283,46 +311,57 @@ export default function RegistrationForm() {
   const [submitAttempted, setSubmitAttempted] =
     useState(false);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] =
+    useState(false);
 
   const locations = useQuery({
     queryKey: ["locations"],
     queryFn: () => getLocations(),
   });
-  
-  const LOCATIONS =
-  locations.data
-    ?.filter((location) => location.status === "APPROVED")
-    .map((location) => ({
-      value: location.id,
-      label: location.name,
-      description: location.description ?? "",
-      mapUrl: location.mapUrl ?? "",
-      imageUrl: location.imageUrl ?? "",
-      sourceUrl: location.sourceUrl ?? "",
-      address: location.address ?? "",
-      beds: location.beds,
-      residentCapacity: location.residentCapacity,
-      carparkCapacity: location.carparkCapacity,
-    })) ?? [];
 
+  const LOCATIONS =
+    locations.data
+      ?.filter(
+        (location) =>
+          location.status === "APPROVED",
+      )
+      .map((location) => ({
+        value: location.id,
+        label: location.name,
+        description:
+          location.description ?? "",
+        mapUrl: location.mapUrl ?? "",
+        imageUrl: location.imageUrl ?? "",
+        sourceUrl: location.sourceUrl ?? "",
+        address: location.address ?? "",
+        beds: location.beds,
+        residentCapacity:
+          location.residentCapacity,
+        carparkCapacity:
+          location.carparkCapacity,
+      })) ?? [];
 
   const validateAndSetField = useCallback(
     (
       fieldKey: string,
       form: RegistrationFormData,
     ) => {
-      const allErrors = validateForm(form);
+      const allErrors =
+        validateForm(form);
 
       setErrors((prev) => {
         if (allErrors[fieldKey]) {
           return {
             ...prev,
-            [fieldKey]: allErrors[fieldKey],
+            [fieldKey]:
+              allErrors[fieldKey],
           };
         }
 
-        return clearError(prev, fieldKey);
+        return clearError(
+          prev,
+          fieldKey,
+        );
       });
     },
     [],
@@ -333,7 +372,10 @@ export default function RegistrationForm() {
       HTMLInputElement | HTMLTextAreaElement
     >,
   ) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setRegForm((prev) => {
       const next = {
@@ -341,11 +383,21 @@ export default function RegistrationForm() {
         [name]: value,
       };
 
-      if (touched.has(name) || submitAttempted) {
-        validateAndSetField(name, next);
+      if (
+        touched.has(name) ||
+        submitAttempted
+      ) {
+        validateAndSetField(
+          name,
+          next,
+        );
       } else {
-        setErrors((prevErrors) =>
-          clearError(prevErrors, name),
+        setErrors(
+          (prevErrors) =>
+            clearError(
+              prevErrors,
+              name,
+            ),
         );
       }
 
@@ -353,21 +405,29 @@ export default function RegistrationForm() {
     });
   };
 
-  const handleBlur = (fieldKey: string) => {
+  const handleBlur = (
+    fieldKey: string,
+  ) => {
     setTouched((prev) => {
       const next = new Set(prev);
       next.add(fieldKey);
       return next;
     });
 
-    validateAndSetField(fieldKey, regForm);
+    validateAndSetField(
+      fieldKey,
+      regForm,
+    );
   };
 
   const handleCompanionChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     companionId: string,
   ) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     const fieldKey =
       `companion-${companionId}-${name}`;
@@ -375,22 +435,34 @@ export default function RegistrationForm() {
     setRegForm((prev) => {
       const next = {
         ...prev,
-        companions: prev.companions.map(
-          (companion) =>
-            companion.id === companionId
-              ? {
-                  ...companion,
-                  [name]: value,
-                }
-              : companion,
-        ),
+        companions:
+          prev.companions.map(
+            (companion) =>
+              companion.id ===
+              companionId
+                ? {
+                    ...companion,
+                    [name]: value,
+                  }
+                : companion,
+          ),
       };
 
-      if (touched.has(fieldKey) || submitAttempted) {
-        validateAndSetField(fieldKey, next);
+      if (
+        touched.has(fieldKey) ||
+        submitAttempted
+      ) {
+        validateAndSetField(
+          fieldKey,
+          next,
+        );
       } else {
-        setErrors((prevErrors) =>
-          clearError(prevErrors, fieldKey),
+        setErrors(
+          (prevErrors) =>
+            clearError(
+              prevErrors,
+              fieldKey,
+            ),
         );
       }
 
@@ -411,11 +483,17 @@ export default function RegistrationForm() {
       return next;
     });
 
-    validateAndSetField(fieldKey, regForm);
+    validateAndSetField(
+      fieldKey,
+      regForm,
+    );
   };
 
   const handleAddCompanion = () => {
-    if (regForm.companions.length >= MAX_COMPANIONS) {
+    if (
+      regForm.companions.length >=
+      MAX_COMPANIONS
+    ) {
       return;
     }
 
@@ -433,10 +511,12 @@ export default function RegistrationForm() {
   ) => {
     setRegForm((prev) => ({
       ...prev,
-      companions: prev.companions.filter(
-        (companion) =>
-          companion.id !== companionId,
-      ),
+      companions:
+        prev.companions.filter(
+          (companion) =>
+            companion.id !==
+            companionId,
+        ),
     }));
 
     setErrors((prev) =>
@@ -447,29 +527,67 @@ export default function RegistrationForm() {
     );
   };
 
+  /*
+   * =====================================================
+   * SUBMIT LOGIC
+   * =====================================================
+   *
+   * CAR_SHARE:
+   *   travelOption = "CAR_SHARE"
+   *   carShare     = false
+   *   address      = required
+   *
+   * SELF_DRIVE + checkbox:
+   *   travelOption = "SELF_DRIVE"
+   *   carShare     = true
+   *   emptySeats   = required
+   *   address      = required
+   *
+   * SELF_DRIVE only:
+   *   travelOption = "SELF_DRIVE"
+   *   carShare     = false
+   *   no address
+   *   no emptySeats
+   */
   const {
     mutate: createRegistrationMutation,
     isPending,
     error,
     reset,
   } = useMutation({
-    mutationFn: () =>
-      createRegistration({
+    mutationFn: () => {
+      const isCarShareTravel =
+        regForm.travelOption === "CAR_SHARE";
+    
+      const isSelfDriveCarShare =
+        regForm.travelOption === "SELF_DRIVE" &&
+        regForm.carShare === true;
+    
+      return createRegistration({
         name: regForm.name.trim(),
         phone: regForm.phone.trim(),
         lineId: regForm.lineId.trim(),
         locationId: regForm.locationId,
         travelOption: regForm.travelOption,
         note: regForm.note.trim() || undefined,
-        ...(regForm.carShare
+    
+        carShare: isCarShareTravel
+          ? false
+          : isSelfDriveCarShare
+            ? true
+            : false,
+            
+        ...(isCarShareTravel
           ? {
-              carShare: true,
               address: (regForm.address ?? "").trim(),
-              ...(regForm.travelOption === "SELF_DRIVE"
-                ? { emptySeats: Number(regForm.emptySeats) }
-                : {}),
             }
-          : { carShare: false }),
+          : isSelfDriveCarShare
+            ? {
+                address: (regForm.address ?? "").trim(),
+                emptySeats: Number(regForm.emptySeats),
+              }
+            : {}),
+    
         companions: regForm.companions.map(
           ({
             name,
@@ -488,7 +606,10 @@ export default function RegistrationForm() {
               : {}),
           }),
         ),
-      }),
+      });
+    },
+    
+
     onSuccess: () => {
       router.push("/submitted");
     },
@@ -497,19 +618,28 @@ export default function RegistrationForm() {
   const handleValidate = () => {
     setSubmitAttempted(true);
 
-    const newErrors = validateForm(regForm);
+    const newErrors =
+      validateForm(regForm);
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) {
-      const firstKey = getFirstErrorKey(
-        newErrors,
-        regForm,
-      );
+    if (
+      Object.keys(newErrors)
+        .length > 0
+    ) {
+      const firstKey =
+        getFirstErrorKey(
+          newErrors,
+          regForm,
+        );
 
       if (firstKey) {
-        requestAnimationFrame(() =>
-          focusField(firstKey, regForm),
+        requestAnimationFrame(
+          () =>
+            focusField(
+              firstKey,
+              regForm,
+            ),
         );
       }
 
@@ -528,11 +658,17 @@ export default function RegistrationForm() {
   };
 
   const handleSubmit = () => {
+    if (!handleValidate()) {
+      setConfirmOpen(false);
+      return;
+    }
+  
     setConfirmOpen(false);
-
+  
     reset();
     createRegistrationMutation();
   };
+  
 
   const handleClear = () => {
     reset();
@@ -547,11 +683,15 @@ export default function RegistrationForm() {
     router.push("/");
   };
 
-  const visibleErrors = submitAttempted
-    ? Object.values(errors)
-    : Array.from(touched)
-        .map((key) => errors[key])
-        .filter(Boolean);
+  const visibleErrors =
+    submitAttempted
+      ? Object.values(errors)
+      : Array.from(touched)
+          .map(
+            (key) =>
+              errors[key],
+          )
+          .filter(Boolean);
 
   const serverMessages =
     error instanceof ApiError
@@ -587,25 +727,6 @@ export default function RegistrationForm() {
           className="flex flex-col gap-8"
           noValidate
         >
-          {/* {(visibleErrors.length > 0 ||
-            serverMessages.length > 0) && (
-            <div className="flex flex-col gap-3">
-              {visibleErrors.length > 0 && (
-                <ErrorSummary
-                  errors={[
-                    ...new Set(visibleErrors),
-                  ]}
-                />
-              )}
-
-              {serverMessages.length > 0 && (
-                <ErrorSummary
-                  errors={serverMessages}
-                />
-              )}
-            </div>
-          )} */}
-
           <FormSection
             title="Pool Villa"
             description="Where would you like to stay?"
@@ -620,11 +741,14 @@ export default function RegistrationForm() {
                 setRegForm((prev) => {
                   const next = {
                     ...prev,
-                    locationId: value,
+                    locationId:
+                      value,
                   };
 
                   if (
-                    touched.has("locationId") ||
+                    touched.has(
+                      "locationId",
+                    ) ||
                     submitAttempted
                   ) {
                     validateAndSetField(
@@ -632,11 +756,12 @@ export default function RegistrationForm() {
                       next,
                     );
                   } else {
-                    setErrors((prevErrors) =>
-                      clearError(
-                        prevErrors,
-                        "locationId",
-                      ),
+                    setErrors(
+                      (prevErrors) =>
+                        clearError(
+                          prevErrors,
+                          "locationId",
+                        ),
                     );
                   }
 
@@ -645,7 +770,9 @@ export default function RegistrationForm() {
               }}
               options={LOCATIONS}
               required
-              error={errors.locationId}
+              error={
+                errors.locationId
+              }
             />
           </FormSection>
 
@@ -667,12 +794,20 @@ export default function RegistrationForm() {
                   icon={UserRound}
                   placeholder="e.g. Many Phrom"
                   value={regForm.name}
-                  onChange={handleChange}
-                  onBlur={() =>
-                    handleBlur("name")
+                  onChange={
+                    handleChange
                   }
-                  error={Boolean(errors.name)}
-                  describedBy={describedBy}
+                  onBlur={() =>
+                    handleBlur(
+                      "name",
+                    )
+                  }
+                  error={Boolean(
+                    errors.name,
+                  )}
+                  describedBy={
+                    describedBy
+                  }
                   autoComplete="name"
                 />
               )}
@@ -692,13 +827,23 @@ export default function RegistrationForm() {
                   type="tel"
                   icon={Phone}
                   placeholder="0812345678"
-                  value={regForm.phone}
-                  onChange={handleChange}
-                  onBlur={() =>
-                    handleBlur("phone")
+                  value={
+                    regForm.phone
                   }
-                  error={Boolean(errors.phone)}
-                  describedBy={describedBy}
+                  onChange={
+                    handleChange
+                  }
+                  onBlur={() =>
+                    handleBlur(
+                      "phone",
+                    )
+                  }
+                  error={Boolean(
+                    errors.phone,
+                  )}
+                  describedBy={
+                    describedBy
+                  }
                   autoComplete="tel"
                   inputMode="tel"
                 />
@@ -715,14 +860,24 @@ export default function RegistrationForm() {
                   id="lineId"
                   name="lineId"
                   type="text"
-                  icon={MessageCircle}
-                  placeholder="Your LINE ID for quick updates"
-                  value={regForm.lineId}
-                  onChange={handleChange}
-                  onBlur={() =>
-                    handleBlur("lineId")
+                  icon={
+                    MessageCircle
                   }
-                  describedBy={describedBy}
+                  placeholder="Your LINE ID for quick updates"
+                  value={
+                    regForm.lineId
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  onBlur={() =>
+                    handleBlur(
+                      "lineId",
+                    )
+                  }
+                  describedBy={
+                    describedBy
+                  }
                 />
               )}
             </Field>
@@ -735,21 +890,52 @@ export default function RegistrationForm() {
             <RadioCardGroup
               legend="Travel option"
               name="travelOption"
-              value={regForm.travelOption}
+              value={
+                regForm.travelOption
+              }
               onChange={(value) => {
                 const nextTravelOption =
                   value as RegistrationFormData["travelOption"];
 
-                setRegForm((prev) => ({
-                  ...prev,
-                  travelOption: nextTravelOption,
-                  carShare:
-                    nextTravelOption === "CAR_SHARE",
-                  emptySeats: 1,
-                  address: "",
-                }));
+                setRegForm(
+                  (prev) => ({
+                    ...prev,
+
+                    travelOption:
+                      nextTravelOption,
+
+                    /*
+                     * เปลี่ยน travel option
+                     * ต้อง reset carShare เสมอ
+                     */
+                    carShare:
+                      false,
+
+                    emptySeats: 1,
+                    address: "",
+                  }),
+                );
+
+                /*
+                 * clear validation ของ
+                 * address / emptySeats
+                 */
+                setErrors(
+                  (prev) => {
+                    const next = {
+                      ...prev,
+                    };
+
+                    delete next.address;
+                    delete next.emptySeats;
+
+                    return next;
+                  },
+                );
               }}
-              options={TRAVEL_OPTIONS}
+              options={
+                TRAVEL_OPTIONS
+              }
             />
 
             {regForm.travelOption ===
@@ -763,13 +949,17 @@ export default function RegistrationForm() {
                   id="carShare"
                   name="carShare"
                   type="checkbox"
-                  checked={regForm.carShare}
+                  checked={
+                    regForm.carShare
+                  }
                   onChange={() =>
-                    setRegForm((prev) => ({
-                      ...prev,
-                      carShare:
-                        !prev.carShare,
-                    }))
+                    setRegForm(
+                      (prev) => ({
+                        ...prev,
+                        carShare:
+                          !prev.carShare,
+                      }),
+                    )
                   }
                 />
               </div>
@@ -783,22 +973,30 @@ export default function RegistrationForm() {
                     id="emptySeats"
                     label="Empty seats"
                     required
-                    error={errors.emptySeats}
+                    error={
+                      errors.emptySeats
+                    }
                   >
                     {(describedBy) => (
                       <TextInput
                         id="emptySeats"
                         name="emptySeats"
                         type="number"
-                        value={regForm.emptySeats}
-                        onChange={handleChange}
+                        value={
+                          regForm.emptySeats
+                        }
+                        onChange={
+                          handleChange
+                        }
                         min={1}
                         onBlur={() =>
                           handleBlur(
                             "emptySeats",
                           )
                         }
-                        error={Boolean(errors.emptySeats)}
+                        error={Boolean(
+                          errors.emptySeats,
+                        )}
                         describedBy={
                           describedBy
                         }
@@ -810,7 +1008,9 @@ export default function RegistrationForm() {
                     id="address"
                     label="Address"
                     required
-                    error={errors.address}
+                    error={
+                      errors.address
+                    }
                   >
                     {(describedBy) => (
                       <TextInput
@@ -818,14 +1018,20 @@ export default function RegistrationForm() {
                         name="address"
                         type="text"
                         placeholder="e.g. 123 Main St, Anytown, USA"
-                        value={regForm.address}
-                        onChange={handleChange}
+                        value={
+                          regForm.address
+                        }
+                        onChange={
+                          handleChange
+                        }
                         onBlur={() =>
                           handleBlur(
                             "address",
                           )
                         }
-                        error={Boolean(errors.address)}
+                        error={Boolean(
+                          errors.address,
+                        )}
                         describedBy={
                           describedBy
                         }
@@ -843,7 +1049,9 @@ export default function RegistrationForm() {
                   label="Address"
                   required
                   hint="Where should the driver pick you up?"
-                  error={errors.address}
+                  error={
+                    errors.address
+                  }
                 >
                   {(describedBy) => (
                     <TextInput
@@ -851,13 +1059,23 @@ export default function RegistrationForm() {
                       name="address"
                       type="text"
                       placeholder="e.g. 123 Main St, Anytown, USA"
-                      value={regForm.address}
-                      onChange={handleChange}
-                      onBlur={() =>
-                        handleBlur("address")
+                      value={
+                        regForm.address
                       }
-                      error={Boolean(errors.address)}
-                      describedBy={describedBy}
+                      onChange={
+                        handleChange
+                      }
+                      onBlur={() =>
+                        handleBlur(
+                          "address",
+                        )
+                      }
+                      error={Boolean(
+                        errors.address,
+                      )}
+                      describedBy={
+                        describedBy
+                      }
                     />
                   )}
                 </Field>
@@ -869,8 +1087,8 @@ export default function RegistrationForm() {
             title="Companions"
             description="Bringing anyone along? Add them here."
           >
-            {regForm.companions.length ===
-            0 ? (
+            {regForm.companions
+              .length === 0 ? (
               <p className="text-sm text-muted">
                 Traveling solo? You can skip
                 this section.
@@ -878,14 +1096,20 @@ export default function RegistrationForm() {
             ) : (
               <div className="flex flex-col gap-4">
                 {regForm.companions.map(
-                  (companion, index) => (
+                  (
+                    companion,
+                    index,
+                  ) => (
                     <div
-                      key={companion.id}
+                      key={
+                        companion.id
+                      }
                       className="rounded-[10px] border border-line bg-surface/50 p-4"
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <h3 className="text-sm font-medium text-card-foreground">
-                          Companion {index + 1}
+                          Companion{" "}
+                          {index + 1}
                         </h3>
 
                         <Button
@@ -918,7 +1142,9 @@ export default function RegistrationForm() {
                             ]
                           }
                         >
-                          {(describedBy) => (
+                          {(
+                            describedBy,
+                          ) => (
                             <TextInput
                               id={`companion-${companion.id}-name`}
                               name="name"
@@ -927,7 +1153,9 @@ export default function RegistrationForm() {
                               value={
                                 companion.name
                               }
-                              onChange={(e) =>
+                              onChange={(
+                                e,
+                              ) =>
                                 handleCompanionChange(
                                   e,
                                   companion.id,
@@ -962,7 +1190,9 @@ export default function RegistrationForm() {
                             ]
                           }
                         >
-                          {(describedBy) => (
+                          {(
+                            describedBy,
+                          ) => (
                             <TextInput
                               id={`companion-${companion.id}-phone`}
                               name="phone"
@@ -972,7 +1202,9 @@ export default function RegistrationForm() {
                               value={
                                 companion.phone
                               }
-                              onChange={(e) =>
+                              onChange={(
+                                e,
+                              ) =>
                                 handleCompanionChange(
                                   e,
                                   companion.id,
@@ -1002,7 +1234,9 @@ export default function RegistrationForm() {
                           label="Relationship"
                           optional
                         >
-                          {(describedBy) => (
+                          {(
+                            describedBy,
+                          ) => (
                             <TextInput
                               id={`companion-${companion.id}-relationship`}
                               name="relationship"
@@ -1011,7 +1245,9 @@ export default function RegistrationForm() {
                               value={
                                 companion.relationship
                               }
-                              onChange={(e) =>
+                              onChange={(
+                                e,
+                              ) =>
                                 handleCompanionChange(
                                   e,
                                   companion.id,
@@ -1034,9 +1270,12 @@ export default function RegistrationForm() {
               type="button"
               variant="outline"
               size="md"
-              onClick={handleAddCompanion}
+              onClick={
+                handleAddCompanion
+              }
               disabled={
-                regForm.companions.length >=
+                regForm.companions
+                  .length >=
                 MAX_COMPANIONS
               }
               className="w-full sm:w-auto"
@@ -1047,21 +1286,29 @@ export default function RegistrationForm() {
               />
               Add companion
 
-              {regForm.companions.length >=
+              {regForm.companions
+                .length >=
                 MAX_COMPANIONS && (
                 <span className="sr-only">
                   {" "}
                   — maximum of{" "}
-                  {MAX_COMPANIONS} reached
+                  {
+                    MAX_COMPANIONS
+                  }{" "}
+                  reached
                 </span>
               )}
             </Button>
 
-            {regForm.companions.length >=
+            {regForm.companions
+              .length >=
               MAX_COMPANIONS && (
               <p className="text-sm text-muted">
                 You can add up to{" "}
-                {MAX_COMPANIONS} companions.
+                {
+                  MAX_COMPANIONS
+                }{" "}
+                companions.
               </p>
             )}
           </FormSection>
@@ -1081,13 +1328,23 @@ export default function RegistrationForm() {
                     name="note"
                     rows={3}
                     placeholder="Let us know if there's anything we should prepare for"
-                    value={regForm.note}
-                    onChange={handleChange}
-                    onBlur={() =>
-                      handleBlur("note")
+                    value={
+                      regForm.note
                     }
-                    error={Boolean(errors.note)}
-                    describedBy={describedBy}
+                    onChange={
+                      handleChange
+                    }
+                    onBlur={() =>
+                      handleBlur(
+                        "note",
+                      )
+                    }
+                    error={Boolean(
+                      errors.note,
+                    )}
+                    describedBy={
+                      describedBy
+                    }
                     maxLength={
                       MAX_NOTE_LENGTH
                     }
@@ -1095,15 +1352,22 @@ export default function RegistrationForm() {
 
                   <p
                     className={`text-right text-xs ${
-                      regForm.note.length >=
+                      regForm.note
+                        .length >=
                       MAX_NOTE_LENGTH
                         ? "text-danger"
                         : "text-muted"
                     }`}
                     aria-live="polite"
                   >
-                    {regForm.note.length}/
-                    {MAX_NOTE_LENGTH}
+                    {
+                      regForm.note
+                        .length
+                    }
+                    /
+                    {
+                      MAX_NOTE_LENGTH
+                    }
                   </p>
                 </>
               )}
@@ -1112,53 +1376,72 @@ export default function RegistrationForm() {
 
           <CardFooter className="flex gap-3 p-0 sm:flex-row justify-between">
             <div className="flex justify-end mb-4">
-              <Button variant="secondary" size="md" onClick={handleCancel}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={
+                  handleCancel
+                }
+              >
                 Cancel
               </Button>
             </div>
-            <div className="flex justify-end mb-4 gap-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              onClick={handleClear}
-            >
-              Clear
-            </Button>
 
-            <ConformationDialog
-              open={confirmOpen}
-              onOpenChange={setConfirmOpen}
-              handleSubmit={handleSubmit}
-            >
+            <div className="flex justify-end mb-4 gap-4">
               <Button
                 type="button"
-                variant="primary"
+                variant="ghost"
                 size="md"
-                disabled={isPending}
-                aria-busy={isPending}
-                className="w-full sm:w-auto"
-                onClick={handleCompleteClick}
+                onClick={
+                  handleClear
+                }
               >
-                {isPending ? (
-                  <>
-                    <Loader2
-                      className="h-4 w-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                    Submitting…
-                  </>
-                ) : (
-                  <>
-                    Complete
-                    <ArrowRight
-                      className="h-4 w-4"
-                      aria-hidden="true"
-                    />
-                  </>
-                )}
+                Clear
               </Button>
-            </ConformationDialog>
+
+              <ConformationDialog
+                open={confirmOpen}
+                onOpenChange={
+                  setConfirmOpen
+                }
+                handleSubmit={
+                  handleSubmit
+                }
+              >
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  disabled={
+                    isPending
+                  }
+                  aria-busy={
+                    isPending
+                  }
+                  className="w-full sm:w-auto"
+                  onClick={
+                    handleCompleteClick
+                  }
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                      Submitting…
+                    </>
+                  ) : (
+                    <>
+                      Complete
+                      <ArrowRight
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      />
+                    </>
+                  )}
+                </Button>
+              </ConformationDialog>
             </div>
           </CardFooter>
         </form>
