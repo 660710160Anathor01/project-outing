@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dashboard } from "./_components/dashborad";
-import { Logout } from "../_component/logout";
 
 export default function Home() {
   const router = useRouter();
@@ -28,10 +27,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-surface px-3 py-5 sm:px-4 sm:py-8 md:py-12">
-        <div className="flex justify-end mb-4">
-            <Logout />
-        </div>
+    <div className="relative min-h-screen bg-surface px-3 py-4 sm:px-4">
       <Dashboard />
     </div>
   );

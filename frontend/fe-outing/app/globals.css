@@ -30,8 +30,13 @@
   --color-accent: #C58B62;
 
   /* Feedback */
-  --color-success: #16A34A;
-  --color-danger: #DC2626;
+  --color-success: #5F8F7A;
+  --color-success-soft: #EDF5F1;
+  --color-success-border: #C8DDD4;
+
+  --color-danger: #C95C5C;
+  --color-danger-soft: #FBEDED;
+  --color-danger-border: #EBCACA;
 
   /* Typography */
   --font-sans: var(--font-geist-sans);
