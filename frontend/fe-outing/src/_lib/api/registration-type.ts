@@ -62,6 +62,7 @@ export type CreateRegistrationInput = {
   locationId: string;
   companions?: CompanionInput[];
   travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  address?: string;
   carShare?: boolean;
   emptySeats?: number;
   note?: string;

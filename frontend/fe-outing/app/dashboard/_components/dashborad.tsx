@@ -354,10 +354,10 @@ function RegistrationTable({
           <colgroup>
             <col className="w-[11%]" /> {/* Name */}
             <col className="w-[10%]" /> {/* Phone */}
-            <col className="w-[10%]" /> {/* Line ID */}
+            <col className="w-[7%]" /> {/* Line ID */}
             <col className="w-[12%]" /> {/* Location */}
             <col className="w-[11%]" /> {/* Travel */}
-            <col className="w-[8%]" /> {/* Car Shared */}
+            <col className="w-[11%]" /> {/* Car Shared */}
             <col className="w-[8%]" /> {/* Empty Seats */}
             <col className="w-[8%]" /> {/* Companions */}
             <col className="w-[14%]" /> {/* Note */}
@@ -372,7 +372,7 @@ function RegistrationTable({
                 "Line ID",
                 "Location",
                 "Travel Option",
-                "Car Shared",
+                "Can take others?",
                 "Empty Seats",
                 "Companions",
                 "Note",
