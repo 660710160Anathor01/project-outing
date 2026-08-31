@@ -508,28 +508,36 @@ export function LocationDetailDialog({
                           </address>
                         </div>
                         {onViewMap || mapHref ? (
-                          <button
-                            type="button"
-                            onClick={handleViewMap}
+                          <a
+                          href={mapHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                        >
+                          View map
+                          <ExternalLink
+                            className="h-3.5 w-3.5"
+                            aria-hidden="true"
+                            strokeWidth={2}
+                          />
+                        </a>
+                        
+                        ) : null}
+                        {location.sourceUrl && (
+                          <a
+                            href={location.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                           >
-                            View map
+                            More info
                             <ExternalLink
                               className="h-3.5 w-3.5"
                               aria-hidden="true"
                               strokeWidth={2}
                             />
-                          </button>
-                        ) : null}
-                        {location.sourceUrl && (
-                          <button
-                            type="button"
-                            onClick={handleViewSource}
-                            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                          >
-                            More info 
-                          </button>
-                        )}
+                          </a>
+)}
                       </div>
                     )}
                   </div>
