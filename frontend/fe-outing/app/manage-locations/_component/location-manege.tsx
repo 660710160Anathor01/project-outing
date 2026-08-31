@@ -215,9 +215,8 @@ export function LocationManage() {
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back
             </Button>
-          <h1 className="text-2xl font-bold text-black mt-4">Manage locations</h1>
-          <p className="text-sm text-gray-500">
-            Add, edit, or remove the destinations attendees can choose from.
+          <h1 className="mt-4 text-2xl font-bold text-card-foreground">Manage locations</h1>
+          <p className="text-sm text-muted">            Add, edit, or remove the destinations attendees can choose from.
           </p>
         </div>
 
@@ -228,30 +227,38 @@ export function LocationManage() {
       </div>
 
       <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={statusFilter === "APPROVED" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setStatusFilter("APPROVED")}
-        >
-          Approved<span className="text-xs text-green-500 bg-green-500/10 rounded-full px-2 py-1">{totalApprovedLocations}</span>
-        </Button>
-        <Button
-          type="button"
-          variant={statusFilter === "PENDING" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setStatusFilter("PENDING")}
-        >
-          Pending<span className="text-xs text-yellow-500 bg-yellow-500/10 rounded-full px-2 py-1">{totalPendingLocations}</span>
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant={statusFilter === "APPROVED" ? "secondary" : "ghost"}
+        size="sm"
+        onClick={() => setStatusFilter("APPROVED")}
+      >
+        Approved
+        <span className="rounded-full bg-success-soft px-2 py-1 text-xs text-success">
+          {totalApprovedLocations}
+        </span>
+      </Button>
+
+      <Button
+        type="button"
+        variant={statusFilter === "PENDING" ? "secondary" : "ghost"}
+        size="sm"
+        onClick={() => setStatusFilter("PENDING")}
+      >
+        Pending
+        <span className="rounded-full bg-accent/15 px-2 py-1 text-xs text-accent">
+          {totalPendingLocations}
+        </span>
+      </Button>
+    </div>
+
 
       {isLoadingLocations && (
-        <p className="text-sm text-gray-500">Loading locations…</p>
+        <p className="text-sm text-muted">Loading locations…</p>
       )}
 
       {locationsError && (
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-danger">
           Error: {(locationsError as Error).message}
         </p>
       )}
@@ -259,8 +266,7 @@ export function LocationManage() {
       {!isLoadingLocations && !locationsError && (
         <>
           {filteredLocations?.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              {statusFilter === "PENDING"
+            <p className="text-sm text-muted">              {statusFilter === "PENDING"
                 ? "No pending locations."
                 : "No locations yet. Add one to get started."}
             </p>
@@ -278,23 +284,31 @@ export function LocationManage() {
                       handleCardClick(location);
                     }
                   }}
-                  className="cursor-pointer transition-colors hover:border-gray-300"
+                  className="cursor-pointer transition-colors hover:border-brand/40 hover:shadow-md"
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                       <MapPin
-                        className="h-4 w-4 shrink-0 text-gray-400"
+                        className="h-4 w-4 shrink-0 text-muted"
                         aria-hidden="true"
                       />
                       <span className="truncate">{location.name}</span>
-                      <span className={`text-xs justify-end rounded-full px-2 py-1 ${location.status === "PENDING" ? "text-yellow-500 bg-yellow-500/10" : "text-green-500 bg-green-500/10"}`}>{location.status}</span>
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${
+                          location.status === "PENDING"
+                            ? "bg-accent/15 text-accent"
+                            : "bg-success-soft text-success"
+                        }`}
+                      >
+                        {location.status}
+                      </span>
+
              
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
                     {location.address && (
-                      <p className="text-sm text-gray-500">
-                        {location.address}
+                      <p className="text-sm text-muted">                        {location.address}
                       </p>
                     )}
 
@@ -319,7 +333,7 @@ export function LocationManage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(location)}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                            className="text-danger hover:bg-danger-soft hover:text-danger"
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
                             Cancel
@@ -350,7 +364,7 @@ export function LocationManage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(location)}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                            className="text-danger hover:bg-danger-soft hover:text-danger"
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
                             Delete

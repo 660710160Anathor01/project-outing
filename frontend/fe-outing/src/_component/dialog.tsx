@@ -16,10 +16,16 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={`fixed inset-0 z-50 bg-[#29211E]/50 backdrop-blur-sm data-[state=open]:animate-[dialogOverlayIn_200ms_ease-out] data-[state=closed]:animate-[dialogOverlayOut_150ms_ease-in] motion-reduce:animate-none ${className ?? ""}`}
+    className={`fixed inset-0 z-50 bg-[#29211E]/50 backdrop-blur-sm
+      data-[state=open]:animate-[dialogOverlayIn_200ms_ease-out]
+      data-[state=closed]:animate-[dialogOverlayOut_150ms_ease-in]
+      motion-reduce:animate-none
+      ${className ?? ""}`}
+    
     {...props}
   />
 ));
+
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
@@ -30,9 +36,29 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={`fixed left-[50%] top-[50%] z-50 flex w-[calc(100%-1.5rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-lg data-[state=open]:animate-[dialogContentIn_200ms_ease-out] data-[state=closed]:animate-[dialogContentOut_150ms_ease-in] motion-reduce:animate-none sm:w-full max-h-[calc(100dvh-2rem)] p-0 ${className ?? ""}`}
+      className={`fixed left-1/2 top-1/2 z-50
+        flex
+        w-[calc(100%-1.5rem)]
+        max-w-lg
+        flex-col
+        overflow-hidden
+        rounded-2xl
+        border border-line
+        bg-card
+        shadow-lg
+        data-[state=open]:animate-[dialogContentIn_200ms_ease-out]
+        data-[state=closed]:animate-[dialogContentOut_150ms_ease-in]
+        motion-reduce:animate-none
+        sm:w-full
+        max-h-[calc(100dvh-2rem)]
+        p-0
+        ${className ?? ""}`}
+      style={{
+        translate: "-50% -50%",
+      }}
       {...props}
     >
+
       {children}
     </DialogPrimitive.Content>
   </DialogPortal>

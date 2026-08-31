@@ -1,10 +1,9 @@
-"use client";
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+import Providers from "./_component/providers";
+import { AuthProvider } from "./_component/auth-provider";
+import SideBar from "@/src/_component/side-bar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,17 +15,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <QueryClientProvider client={queryClient}>
-        <body className="min-h-full flex flex-col">{children}</body>
-      </QueryClientProvider>
+      <body className="min-h-screen bg-background">
+      <Providers>
+    <AuthProvider>
+      <div className="flex h-screen w-full overflow-hidden">
+        <SideBar />
+
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    </AuthProvider>
+  </Providers>
+
+      </body>
     </html>
   );
 }
