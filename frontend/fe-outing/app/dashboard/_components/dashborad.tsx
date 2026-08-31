@@ -90,7 +90,7 @@ function SummaryCard({
   locationMapping: Record<string, string>;
 }) {
   return (
-    <div className="my-4 grid grid-cols-1 gap-4 bg-card text-card-foreground md:grid-cols-2 lg:grid-cols-4">
+    <div className="my-4 grid grid-cols-1 items-stretch gap-4 bg-card text-card-foreground md:grid-cols-2 lg:grid-cols-4">
       <Card>
         <CardHeader>
           <CardTitle>Submitted Registrations</CardTitle>
@@ -107,21 +107,23 @@ function SummaryCard({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Most Location Picked</CardTitle>
         </CardHeader>
 
-        <CardContent className="flex items-center gap-3 text-brand">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10">
+        <CardContent className="flex items-start gap-3 text-brand">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10">
             <MapPin className="h-5 w-5" />
           </div>
 
-          <p className="truncate text-2xl font-bold">
+          <p className="min-w-0 break-words text-sm font-bold leading-tight">
             {locationMapping?.[mostLocationPicked] ?? "-"}
           </p>
         </CardContent>
       </Card>
+
+
 
       <Card>
         <CardHeader>
@@ -342,15 +344,28 @@ function RegistrationTable({
   const router = useRouter();
 
   return (
-    <div>
+    <div className="min-w-0">
       <h1 className="text-2xl font-bold tracking-tight text-card-foreground">
         Registration List
       </h1>
 
-      <div className="my-4 w-full max-w-full overflow-x-auto rounded-xl border border-line bg-card p-4">
-        <table className="w-full min-w-[1200px] table-fixed">
+      <div className="my-4 w-full min-w-0 overflow-x-auto rounded-xl border border-line bg-card">
+        <table className="w-full min-w-[1100px] table-fixed border-collapse">
+          <colgroup>
+            <col className="w-[11%]" /> {/* Name */}
+            <col className="w-[10%]" /> {/* Phone */}
+            <col className="w-[10%]" /> {/* Line ID */}
+            <col className="w-[12%]" /> {/* Location */}
+            <col className="w-[11%]" /> {/* Travel */}
+            <col className="w-[8%]" /> {/* Car Shared */}
+            <col className="w-[8%]" /> {/* Empty Seats */}
+            <col className="w-[8%]" /> {/* Companions */}
+            <col className="w-[14%]" /> {/* Note */}
+            <col className="w-[8%]" /> {/* Actions */}
+          </colgroup>
+
           <thead>
-            <tr className="border-b border-line text-right">
+            <tr className="border-b border-line bg-surface/50">
               {[
                 "Name",
                 "Phone",
@@ -365,7 +380,7 @@ function RegistrationTable({
               ].map((heading) => (
                 <th
                   key={heading}
-                  className="p-3 text-xs font-semibold uppercase tracking-wide text-muted"
+                  className="whitespace-nowrap px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted"
                 >
                   {heading}
                 </th>
@@ -375,62 +390,114 @@ function RegistrationTable({
 
           <tbody>
             {registrations.length === 0 ? (
-              <tr>
+              <tr className="h-16">
                 <td
                   colSpan={10}
-                  className="p-8 text-center text-sm text-muted"
+                  className="px-4 text-center text-sm text-muted"
                 >
                   No registrations match your filters.
                 </td>
               </tr>
             ) : (
-              registrations.map((registration, index) => (
+              registrations.map((registration) => (
                 <tr
-                  key={index}
-                  className="border-b border-line text-right transition-colors last:border-0 hover:bg-surface/60"
+                  key={registration.id}
+                  className="h-16 border-b border-line last:border-0 hover:bg-surface/40"
                 >
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {registration.name ?? "-"}
+                  {/* Name */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm font-medium text-card-foreground"
+                      title={registration.name ?? ""}
+                    >
+                      {registration.name ?? "-"}
+                    </div>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {registration.phone ?? "-"}
+                  {/* Phone */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm text-card-foreground"
+                      title={registration.phone ?? ""}
+                    >
+                      {registration.phone ?? "-"}
+                    </div>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {registration.lineId ?? "-"}
+                  {/* Line ID */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm text-card-foreground"
+                      title={registration.lineId ?? ""}
+                    >
+                      {registration.lineId ?? "-"}
+                    </div>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {locationMapping[registration.locationId] ?? "-"}
+                  {/* Location */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm text-card-foreground"
+                      title={
+                        locationMapping[registration.locationId] ?? ""
+                      }
+                    >
+                      {locationMapping[registration.locationId] ?? "-"}
+                    </div>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {TravelOptionMapping[
-                      registration.travelOption
-                    ] ?? "-"}
+                  {/* Travel Option */}
+                  <td className="h-16 px-3 py-2 align-middle">
+                    <span className="whitespace-nowrap text-sm text-card-foreground">
+                      {TravelOptionMapping[
+                        registration.travelOption
+                      ] ?? "-"}
+                    </span>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {registration.carShare ? "Yes" : "No"}
+                  {/* Car Shared */}
+                  <td className="h-16 px-3 py-2 text-right align-middle">
+                    <span
+                      className={
+                        registration.carShare
+                          ? "font-medium text-accent"
+                          : "text-muted"
+                      }
+                    >
+                      {registration.carShare ? "Yes" : "No"}
+                    </span>
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
+                  {/* Empty Seats */}
+                  <td className="h-16 px-3 py-2 text-right align-middle text-sm text-card-foreground">
                     {registration.emptySeats ?? "-"}
                   </td>
 
-                  <td className="break-words p-3 text-sm text-card-foreground">
-                    {registration.companions?.length ?? "-"}
+                  {/* Companions */}
+                  <td className="h-16 px-3 py-2 text-right align-middle text-sm text-card-foreground">
+                    {registration.companions?.length ?? 0}
                   </td>
 
-                  <td className="break-words p-3 text-sm text-muted">
-                    {registration.note ?? "-"}
+                  {/* Note */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    {registration.note ? (
+                      <p
+                        className="line-clamp-2 text-sm leading-5 text-muted"
+                        title={registration.note}
+                      >
+                        {registration.note}
+                      </p>
+                    ) : (
+                      <span className="text-sm text-muted">-</span>
+                    )}
                   </td>
 
-                  <td className="p-3">
+                  {/* Actions */}
+                  <td className="h-16 px-3 py-2 align-middle">
                     <Button
                       variant="outline"
-                      className="w-full"
+                      size="sm"
+                      className="w-full whitespace-nowrap"
                       onClick={() => {
                         router.push(
                           `/detail/${registration.id}`,
@@ -445,11 +512,13 @@ function RegistrationTable({
               ))
             )}
           </tbody>
+
         </table>
       </div>
     </div>
   );
 }
+
 
 function SentFormDialog({
   handleSentForm,
@@ -666,7 +735,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-card p-6 text-card-foreground">
+    <div className="flex min-w-0 flex-col gap-4 rounded-xl bg-card p-6 text-card-foreground">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
