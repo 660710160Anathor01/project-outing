@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Car,
@@ -686,293 +687,261 @@ function TripInsights({
 }
 
 export default function ReportsPage() {
-  const {
-    data: registrations = [],
-    isLoading: registrationsLoading,
-    error: registrationsError,
-  } = useQuery<Registration[]>({
-    queryKey: ["registrations"],
-    queryFn: () => getAllRegistrations(),
-  });
-
-  const {
-    data: locations = [],
-    isLoading: locationsLoading,
-    error: locationsError,
-  } = useQuery<Location[]>({
-    queryKey: ["locations"],
-    queryFn: () => getLocations(),
-  });
-
-  const report = useMemo(() => {
-    const employees = registrations.length;
-
-    const companions = registrations.reduce(
-      (sum, registration) =>
-        sum +
-        (registration.companions?.length ?? 0),
-      0,
-    );
-
-    const totalPeople =
-      employees + companions;
-
-    /*
-    * Self Drive = 1 registration = 1 car
-    */
-    const totalCars = registrations.filter(
-        (registration) =>
-        registration.travelOption === "SELF_DRIVE",
-    ).length;
+    const router = useRouter();
+    const [checking, setChecking] = useState(true);
   
-
-    /*
-     * Car Share = person who needs
-     * to ride with someone else.
-     */
-    const needRide = registrations.filter(
-      (registration) =>
-        registration.travelOption ===
-        "CAR_SHARE",
-    ).length;
-
-    /*
-     * emptySeats belongs only to
-     * Self Drive registrations.
-     */
-    const availableSeats =
-      registrations
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+  
+      if (!token || role !== "admin") {
+        router.replace("/");
+        return;
+      }
+  
+      setChecking(false);
+    }, [router]);
+  
+    if (checking) {
+      return null;
+    }
+  
+    return <ReportsContent />;
+  }
+  
+  function ReportsContent() {
+    const {
+      data: registrations = [],
+      isLoading: registrationsLoading,
+      error: registrationsError,
+    } = useQuery<Registration[]>({
+      queryKey: ["registrations"],
+      queryFn: () => getAllRegistrations(),
+    });
+  
+    const {
+      data: locations = [],
+      isLoading: locationsLoading,
+      error: locationsError,
+    } = useQuery<Location[]>({
+      queryKey: ["locations"],
+      queryFn: () => getLocations(),
+    });
+  
+    const report = useMemo(() => {
+      const employees = registrations.length;
+  
+      const companions = registrations.reduce(
+        (sum, registration) =>
+          sum + (registration.companions?.length ?? 0),
+        0,
+      );
+  
+      const totalPeople = employees + companions;
+  
+      const totalCars = registrations.filter(
+        (registration) =>
+          registration.travelOption === "SELF_DRIVE",
+      ).length;
+  
+      const needRide = registrations.filter(
+        (registration) =>
+          registration.travelOption === "CAR_SHARE",
+      ).length;
+  
+      const availableSeats = registrations
         .filter(
           (registration) =>
-            registration.travelOption ===
-            "SELF_DRIVE",
+            registration.travelOption === "SELF_DRIVE",
         )
         .reduce(
           (sum, registration) =>
-            sum +
-            (registration.emptySeats ?? 0),
+            sum + (registration.emptySeats ?? 0),
           0,
         );
-
-    const locationMap = new Map<
-      string,
-      Location
-    >();
-
-    locations.forEach((location) => {
-      locationMap.set(location.id, location);
-    });
-
-    const locationStats = new Map<
-      string,
-      LocationReport
-    >();
-
-    registrations.forEach((registration) => {
-      const locationId =
-        registration.locationId;
-
-      const existing =
-        locationStats.get(locationId);
-
-      if (existing) {
-        existing.registrations += 1;
-
-        if (
-          registration.travelOption ===
-          "SELF_DRIVE"
-        ) {
-          existing.cars += 1;
-        }
-
-        if (
-          registration.travelOption ===
-          "CAR_SHARE"
-        ) {
-          existing.needRide += 1;
-        }
-
-        return;
-      }
-
-      locationStats.set(locationId, {
-        id: locationId,
-        name:
-          locationMap.get(locationId)?.name ??
-          "Unknown Location",
-        registrations: 1,
-        cars:
-          registration.travelOption ===
-          "SELF_DRIVE"
-            ? 1
-            : 0,
-        needRide:
-          registration.travelOption ===
-          "CAR_SHARE"
-            ? 1
-            : 0,
+  
+      const locationMap = new Map<string, Location>();
+  
+      locations.forEach((location) => {
+        locationMap.set(location.id, location);
       });
-    });
-
-    const locationReports = Array.from(
-      locationStats.values(),
-    ).sort(
-      (a, b) =>
-        b.registrations -
-        a.registrations,
-    );
-
-    const topLocation =
-      locationReports[0]?.name;
-
-    return {
-      employees,
-      companions,
-      totalPeople,
-      totalCars,
-      needRide,
-      availableSeats,
-      locationReports,
-      topLocation,
-    };
-  }, [registrations, locations]);
-
-  if (
-    registrationsLoading ||
-    locationsLoading
-  ) {
-    return <Loading />;
-  }
-
-  if (registrationsError) {
+  
+      const locationStats = new Map<string, LocationReport>();
+  
+      registrations.forEach((registration) => {
+        const locationId = registration.locationId;
+        const existing = locationStats.get(locationId);
+  
+        if (existing) {
+          existing.registrations += 1;
+  
+          if (registration.travelOption === "SELF_DRIVE") {
+            existing.cars += 1;
+          }
+  
+          if (registration.travelOption === "CAR_SHARE") {
+            existing.needRide += 1;
+          }
+  
+          return;
+        }
+  
+        locationStats.set(locationId, {
+          id: locationId,
+          name:
+            locationMap.get(locationId)?.name ??
+            "Unknown Location",
+          registrations: 1,
+          cars:
+            registration.travelOption === "SELF_DRIVE"
+              ? 1
+              : 0,
+          needRide:
+            registration.travelOption === "CAR_SHARE"
+              ? 1
+              : 0,
+        });
+      });
+  
+      const locationReports = Array.from(
+        locationStats.values(),
+      ).sort(
+        (a, b) => b.registrations - a.registrations,
+      );
+  
+      return {
+        employees,
+        companions,
+        totalPeople,
+        totalCars,
+        needRide,
+        availableSeats,
+        locationReports,
+        topLocation: locationReports[0]?.name,
+      };
+    }, [registrations, locations]);
+  
+    if (registrationsLoading || locationsLoading) {
+      return <Loading />;
+    }
+  
+    if (registrationsError) {
+      return (
+        <div className="p-6 text-red-500">
+          Error loading registrations:{" "}
+          {registrationsError.message}
+        </div>
+      );
+    }
+  
+    if (locationsError) {
+      return (
+        <div className="p-6 text-red-500">
+          Error loading locations:{" "}
+          {locationsError.message}
+        </div>
+      );
+    }
+  
     return (
-      <div className="p-6 text-red-500">
-        Error loading registrations:{" "}
-        {registrationsError.message}
-      </div>
-    );
-  }
-
-  if (locationsError) {
-    return (
-      <div className="p-6 text-red-500">
-        Error loading locations:{" "}
-        {locationsError.message}
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-full bg-card p-4 text-card-foreground sm:p-6">
-      <div className="mx-auto w-full max-w-[1600px]">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Trip Report
-              </h1>
-
-              <p className="mt-1 text-sm text-muted">
-                Overview of registrations,
-                people and transportation.
+      <div className="min-h-full bg-card p-4 text-card-foreground sm:p-6">
+        <div className="mx-auto w-full max-w-[1600px]">
+          <div className="mb-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  Trip Report
+                </h1>
+  
+                <p className="mt-1 text-sm text-muted">
+                  Overview of registrations, people and
+                  transportation.
+                </p>
+              </div>
+  
+              <p className="text-xs text-muted">
+                Last updated:{" "}
+                {new Date().toLocaleDateString()}
               </p>
             </div>
-
-            <p className="text-xs text-muted">
-              Last updated:{" "}
-              {new Date().toLocaleDateString()}
-            </p>
+          </div>
+  
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Total People"
+              value={report.totalPeople}
+              description={`${report.employees} employees + ${report.companions} companions`}
+              icon={Users}
+            />
+  
+            <StatCard
+              title="Total Cars"
+              value={report.totalCars}
+              description="Total cars from Self Drive"
+              icon={Car}
+            />
+  
+            <StatCard
+              title="Need a Ride"
+              value={report.needRide}
+              description="People using Car Share"
+              icon={UserRound}
+              iconClassName="bg-accent/15 text-accent"
+            />
+  
+            <StatCard
+              title="Available Seats"
+              value={report.availableSeats}
+              description="Seats offered by Self Drive"
+              icon={CheckCircle2}
+              iconClassName="bg-success-soft text-success"
+            />
+          </div>
+  
+          <div className="mt-4">
+            <TransportationCard
+              availableSeats={report.availableSeats}
+              needRide={report.needRide}
+              totalCars={report.totalCars}
+            />
+          </div>
+  
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <TopLocations
+              locations={report.locationReports}
+            />
+  
+            <TravelOptionCard
+              totalCars={report.totalCars}
+              needRide={report.needRide}
+              total={report.employees}
+            />
+          </div>
+  
+          <div className="mt-4">
+            <LocationBreakdown
+              locations={report.locationReports}
+            />
+          </div>
+  
+          <div className="mt-4">
+            <PeopleBreakdown
+              employees={report.employees}
+              companions={report.companions}
+            />
+          </div>
+  
+          <div className="mt-4">
+            <TripInsights
+              totalCars={report.totalCars}
+              availableSeats={report.availableSeats}
+              needRide={report.needRide}
+              companions={report.companions}
+              topLocation={report.topLocation}
+            />
           </div>
         </div>
-
-        {/* KPI */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Total People"
-            value={report.totalPeople}
-            description={`${report.employees} employees + ${report.companions} companions`}
-            icon={Users}
-          />
-
-          <StatCard
-            title="Total Cars"
-            value={report.totalCars}
-            description="Total cars from Self Drive"
-            icon={Car}
-          />
-
-          <StatCard
-            title="Need a Ride"
-            value={report.needRide}
-            description="People using Car Share"
-            icon={UserRound}
-            iconClassName="bg-accent/15 text-accent" 
-           />
-
-          <StatCard
-            title="Available Seats"
-            value={report.availableSeats}
-            description="Seats offered by Self Drive"
-            icon={CheckCircle2}
-            iconClassName="bg-success-soft text-success"
-          />
-        </div>
-
-        {/* Transportation */}
-        <div className="mt-4">
-          <TransportationCard
-            availableSeats={
-              report.availableSeats
-            }
-            needRide={report.needRide}
-            totalCars={report.totalCars}
-          />
-        </div>
-
-        {/* Top locations + travel */}
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <TopLocations
-            locations={[
-              ...report.locationReports,
-            ]}
-          />
-
-          <TravelOptionCard
-            totalCars={report.totalCars}
-            needRide={report.needRide}
-            total={report.employees}
-          />
-        </div>
-
-        {/* Location */}
-        <div className="mt-4">
-          <LocationBreakdown
-            locations={report.locationReports}
-          />
-        </div>
-
-        {/* People */}
-        <div className="mt-4">
-          <PeopleBreakdown
-            employees={report.employees}
-            companions={report.companions}
-          />
-        </div>
-
-        {/* Insights */}
-        <div className="mt-4">
-          <TripInsights
-            totalCars={report.totalCars}
-            availableSeats={
-              report.availableSeats
-            }
-            needRide={report.needRide}
-            companions={report.companions}
-            topLocation={report.topLocation}
-          />
-        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+  
