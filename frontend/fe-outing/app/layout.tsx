@@ -1,9 +1,15 @@
+import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Providers from "./_component/providers";
 import { AuthProvider } from "./_component/auth-provider";
 import SideBar from "@/src/_component/side-bar";
+
+export const metadata: Metadata = {
+  title: "Outing",
+  description: "Outing Registration & Trip Report",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
