@@ -55,24 +55,34 @@ export default function SideBar() {
   const [collapsed, setCollapsed] = useState(false);
 
   /*
-   * สำคัญ:
-   * ใช้ () => getLocations()
-   * เพราะ getLocations รับ AbortSignal แต่ React Query
-   * queryFn จะส่ง QueryFunctionContext เข้ามา
+   * หน้า Login /
+   * ไม่ต้อง render sidebar และไม่ต้อง fetch locations
    */
+  const isPublicPage = pathname === "/";
+
   const { data: locations = [] } = useQuery({
     queryKey: ["locations"],
     queryFn: () => getLocations(),
-    enabled: Boolean(isAdmin),
+    enabled: !isPublicPage && Boolean(isAdmin),
   });
+
+  /*
+   * ซ่อน Sidebar หน้า /
+   */
+  if (isPublicPage) {
+    return null;
+  }
+
+  /*
+   * รอ AuthProvider ตรวจสอบ auth
+   */
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   const pendingLocations = locations.filter(
     (location) => location.status === "PENDING",
   ).length;
-
-  if (loading || !isAdmin) {
-    return null;
-  }
 
   const menuItems: MenuItem[] = baseMenuItems.map((item) => ({
     ...item,
@@ -270,7 +280,6 @@ export default function SideBar() {
                   aria-hidden="true"
                 />
 
-                {/* Expanded */}
                 {!collapsed && (
                   <span
                     className="
@@ -305,7 +314,6 @@ export default function SideBar() {
                   </span>
                 )}
 
-                {/* Collapsed */}
                 {collapsed &&
                   item.badge !== undefined &&
                   item.badge > 0 && (
