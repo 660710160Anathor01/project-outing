@@ -7,7 +7,7 @@ import { AuthProvider } from "./_component/auth-provider";
 import SideBar from "@/src/_component/side-bar";
 
 export const metadata: Metadata = {
-  title: "Outing",
+  title: "Outing Registration",
   description: "Outing Registration & Trip Report",
 };
 
