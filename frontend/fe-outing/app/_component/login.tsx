@@ -218,6 +218,11 @@ export default function LoginPage() {
     router.push("/create");
   };
 
+  const handleRegistrationManage = () => {
+    setRole("USER");
+    router.push("/menage-registration");
+  }
+
   /**
    * Switch to admin
    */
@@ -482,10 +487,17 @@ export default function LoginPage() {
               >
                 Outing Registration
               </Button>
-
               <Button
                 type="button"
                 variant="outline"
+                onClick={handleRegistrationManage}
+              >
+                Manage Registration
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={handleOpenLocationForm}
               >
                 <MapPinPlus

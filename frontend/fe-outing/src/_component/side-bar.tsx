@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   LayoutDashboard,
   LogOut,
 } from "lucide-react";
@@ -39,6 +40,11 @@ const baseMenuItems: Omit<MenuItem, "badge">[] = [
     label: "Reports",
     href: "/reports",
     icon: BarChart3,
+  },
+  {
+    label: "Payment",
+    href: "/manage-payment",
+    icon: CreditCard,
   },
   {
     label: "Registrations",
