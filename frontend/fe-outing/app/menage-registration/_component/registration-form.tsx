@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Ban,
   Car,
   Loader2,
   MessageCircle,
@@ -23,8 +24,16 @@ import {
   CardFooter,
 } from "../../../src/_component/card-template";
 import { Button } from "../../../src/_component/button";
-import { createRegistration } from "../../../src/_lib/api/registrationService";
-import { ApiError } from "../../../src/_lib/api/registration-type";
+import {
+  cancelRegistrationByRegistrationNumber,
+  getLocations,
+  updateRegistrationByRegistrationNumber,
+} from "../../../src/_lib/api/registrationService";
+import {
+  ApiError,
+  type CompanionInput,
+  type Registration,
+} from "../../../src/_lib/api/registration-type";
 import {
   ErrorSummary,
   Field,
@@ -35,7 +44,6 @@ import {
   type RadioCardOption,
 } from "./form-fields";
 import ConformationDialog from "./conformation-dialog";
-import { getLocations } from "../../../src/_lib/api/registrationService";
 
 type Companion = {
   id: string;
@@ -96,17 +104,30 @@ const emptyCompanion = (): Companion => ({
   relationship: "",
 });
 
-const emptyForm = (): RegistrationFormData => ({
-  name: "",
-  phone: "",
-  lineId: "",
-  locationId: "",
-  companions: [],
-  travelOption: "SELF_DRIVE",
-  carShare: false,
-  emptySeats: 1,
-  address: "",
-  note: "",
+const companionFromInput = (
+  companion: CompanionInput,
+): Companion => ({
+  id: crypto.randomUUID(),
+  name: companion.name ?? "",
+  phone: companion.phone ?? "",
+  relationship: companion.relationship ?? "",
+});
+
+const formFromRegistration = (
+  registration: Registration,
+): RegistrationFormData => ({
+  name: registration.name ?? "",
+  phone: registration.phone ?? "",
+  lineId: registration.lineId ?? "",
+  locationId: registration.locationId ?? "",
+  companions: (registration.companions ?? []).map(
+    companionFromInput,
+  ),
+  travelOption: registration.travelOption,
+  carShare: registration.carShare ?? false,
+  emptySeats: registration.emptySeats ?? 1,
+  address: registration.address ?? "",
+  note: registration.note ?? "",
 });
 
 function normalizePhone(value: string): string {
@@ -294,13 +315,33 @@ function focusField(
   document.getElementById(fieldKey)?.focus();
 }
 
-export default function RegistrationForm() {
+type ManageRegistrationFormProps = {
+  registrationData: Registration;
+};
+
+export default function ManageRegistrationForm({
+  registrationData,
+}: ManageRegistrationFormProps) {
   const router = useRouter();
 
   const formRef = useRef<HTMLFormElement>(null);
 
+  /*
+   * name/phone identify the registration on the API
+   * (update-by-registration-number / cancel-by-registration-number).
+   * Keep the original values fetched before redirect so editing the
+   * name/phone fields in the form doesn't change which record we
+   * update or cancel.
+   */
+  const registrationIdentity = useRef({
+    name: registrationData.name,
+    phone: registrationData.phone,
+  });
+
   const [regForm, setRegForm] =
-    useState<RegistrationFormData>(emptyForm);
+    useState<RegistrationFormData>(() =>
+      formFromRegistration(registrationData),
+    );
 
   const [errors, setErrors] =
     useState<FormErrors>({});
@@ -312,6 +353,9 @@ export default function RegistrationForm() {
     useState(false);
 
   const [confirmOpen, setConfirmOpen] =
+    useState(false);
+
+  const [rejectConfirmOpen, setRejectConfirmOpen] =
     useState(false);
 
   const locations = useQuery({
@@ -550,68 +594,81 @@ export default function RegistrationForm() {
    *   no emptySeats
    */
   const {
-    mutate: createRegistrationMutation,
+    mutate: updateRegistrationMutation,
     isPending,
     error,
     reset,
   } = useMutation({
     mutationFn: () => {
-      const isCarShareTravel =
-        regForm.travelOption === "CAR_SHARE";
-    
-      const isSelfDriveCarShare =
-        regForm.travelOption === "SELF_DRIVE" &&
-        regForm.carShare === true;
-    
-      return createRegistration({
-        name: regForm.name.trim(),
-        phone: regForm.phone.trim(),
-        lineId: regForm.lineId.trim(),
-        locationId: regForm.locationId,
-        travelOption: regForm.travelOption,
-        note: regForm.note.trim() || undefined,
-    
-        carShare: isCarShareTravel
-          ? false
-          : isSelfDriveCarShare
-            ? true
-            : false,
-            
-        ...(isCarShareTravel
-          ? {
-              address: (regForm.address ?? "").trim(),
-            }
-          : isSelfDriveCarShare
+        const payload = {
+          name: regForm.name.trim(),
+          phone: regForm.phone.trim(),
+          lineId: regForm.lineId.trim(),
+          locationId: regForm.locationId,
+          travelOption: regForm.travelOption,
+          note: regForm.note.trim() || undefined,
+      
+          carShare:
+            regForm.travelOption === "CAR_SHARE"
+              ? false
+              : regForm.travelOption === "SELF_DRIVE" &&
+                  regForm.carShare === true
+                ? true
+                : false,
+      
+          ...(regForm.travelOption === "CAR_SHARE"
             ? {
                 address: (regForm.address ?? "").trim(),
-                emptySeats: Number(regForm.emptySeats),
               }
-            : {}),
-    
-        companions: regForm.companions.map(
-          ({
-            name,
-            phone,
-            relationship,
-          }) => ({
-            name: name.trim(),
-            ...(phone.trim()
-              ? { phone: phone.trim() }
-              : {}),
-            ...(relationship.trim()
+            : regForm.travelOption === "SELF_DRIVE" &&
+                regForm.carShare === true
               ? {
-                  relationship:
-                    relationship.trim(),
+                  address: (regForm.address ?? "").trim(),
+                  emptySeats: Number(regForm.emptySeats),
                 }
               : {}),
-          }),
-        ),
-      });
-    },
-    
+      
+          companions: regForm.companions.map(
+            ({ name, phone, relationship }) => ({
+              name: name.trim(),
+              ...(phone.trim() ? { phone: phone.trim() } : {}),
+              ...(relationship.trim()
+                ? { relationship: relationship.trim() }
+                : {}),
+            }),
+          ),
+        };
+      
+        console.log("[UPDATE] identity:", registrationIdentity.current);
+        console.log("[UPDATE] payload:", payload);
+      
+        return updateRegistrationByRegistrationNumber(
+          registrationIdentity.current.name,
+          registrationIdentity.current.phone,
+          payload,
+        );
+      },
+      
 
     onSuccess: () => {
       router.push("/submitted");
+    },
+  });
+
+  const {
+    mutate: rejectRegistrationMutation,
+    isPending: isRejectPending,
+    error: rejectError,
+    reset: resetReject,
+  } = useMutation({
+    mutationFn: () =>
+      cancelRegistrationByRegistrationNumber(
+        registrationIdentity.current.name,
+        registrationIdentity.current.phone,
+      ),
+
+    onSuccess: () => {
+      router.push("/cancelled");
     },
   });
 
@@ -649,7 +706,7 @@ export default function RegistrationForm() {
     return true;
   };
 
-  const handleCompleteClick = () => {
+  const handleSaveClick = () => {
     if (!handleValidate()) {
       return;
     }
@@ -666,9 +723,19 @@ export default function RegistrationForm() {
     setConfirmOpen(false);
   
     reset();
-    createRegistrationMutation();
+    updateRegistrationMutation();
   };
-  
+
+  const handleRejectClick = () => {
+    setRejectConfirmOpen(true);
+  };
+
+  const handleReject = () => {
+    setRejectConfirmOpen(false);
+
+    resetReject();
+    rejectRegistrationMutation();
+  };
 
   const handleClear = () => {
     reset();
@@ -676,7 +743,7 @@ export default function RegistrationForm() {
     setTouched(new Set());
     setSubmitAttempted(false);
     setConfirmOpen(false);
-    setRegForm(emptyForm());
+    setRegForm(formFromRegistration(registrationData));
   };
 
   const handleCancel = () => {
@@ -693,27 +760,29 @@ export default function RegistrationForm() {
           )
           .filter(Boolean);
 
+  const activeError = error ?? rejectError;
+
   const serverMessages =
-    error instanceof ApiError
-      ? error.isRateLimited
+    activeError instanceof ApiError
+      ? activeError.isRateLimited
         ? [
             "Too many requests. Please wait a moment and try again.",
           ]
-        : error.messages
-      : error
-        ? [error.message]
+        : activeError.messages
+      : activeError
+        ? [activeError.message]
         : [];
 
   return (
     <Card className="w-full rounded-xl border-line bg-card text-card-foreground shadow-sm">
       <CardHeader className="space-y-2 pb-4">
         <CardTitle className="text-2xl font-semibold tracking-tight">
-          Join the Khao Yai trip
+          Manage your registration
         </CardTitle>
 
         <CardDescription className="text-base text-muted">
-          Pick your destination and tell us how you&apos;ll
-          get there. Takes about a minute.
+          Update your details below, or reject your spot
+          on the Khao Yai trip.
         </CardDescription>
       </CardHeader>
 
@@ -722,7 +791,7 @@ export default function RegistrationForm() {
           ref={formRef}
           onSubmit={(e) => {
             e.preventDefault();
-            handleCompleteClick();
+            handleSaveClick();
           }}
           className="flex flex-col gap-8"
           noValidate
@@ -1374,13 +1443,14 @@ export default function RegistrationForm() {
             </Field>
           </FormSection>
 
+          
           <FormSection title="Join our LINE group">
             <img src="/img/lineGroup.jpg" alt="Line Group" width={280} height={280} />
             <p className="text-sm text-muted">Please join the group, to get information or payment details.</p>
           </FormSection>
 
-          <CardFooter className="flex gap-3 p-0 sm:flex-row justify-end pt-8">
-            <div className="flex justify-end mb-4">
+          <CardFooter className="flex gap-3 p-0 sm:flex-row pt-8 justify-between">
+            <div className="flex justify-end mb-4 gap-4">
               <Button
                 variant="secondary"
                 size="md"
@@ -1390,6 +1460,50 @@ export default function RegistrationForm() {
               >
                 Cancel
               </Button>
+
+              <ConformationDialog
+                open={rejectConfirmOpen}
+                onOpenChange={
+                  setRejectConfirmOpen
+                }
+                handleSubmit={
+                  handleReject
+                }
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  disabled={
+                    isRejectPending
+                  }
+                  aria-busy={
+                    isRejectPending
+                  }
+                  className="text-danger hover:bg-red-50 hover:text-danger"
+                  onClick={
+                    handleRejectClick
+                  }
+                >
+                  {isRejectPending ? (
+                    <>
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                      Rejecting…
+                    </>
+                  ) : (
+                    <>
+                      <Ban
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      />
+                      Reject
+                    </>
+                  )}
+                </Button>
+              </ConformationDialog>
             </div>
 
             <div className="flex justify-end mb-4 gap-4">
@@ -1401,7 +1515,7 @@ export default function RegistrationForm() {
                   handleClear
                 }
               >
-                Clear
+                Reset changes
               </Button>
 
               <ConformationDialog
@@ -1425,7 +1539,7 @@ export default function RegistrationForm() {
                   }
                   className="w-full sm:w-auto"
                   onClick={
-                    handleCompleteClick
+                    handleSaveClick
                   }
                 >
                   {isPending ? (
@@ -1434,11 +1548,11 @@ export default function RegistrationForm() {
                         className="h-4 w-4 animate-spin"
                         aria-hidden="true"
                       />
-                      Submitting…
+                      Saving…
                     </>
                   ) : (
                     <>
-                      Complete
+                      Save changes
                       <ArrowRight
                         className="h-4 w-4"
                         aria-hidden="true"

@@ -1,4 +1,4 @@
-export type RegistrationStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
+export type RegistrationStatus = "PENDING" | "CONFIRMED" | "PAID" | "CANCELLED";
 
 /** Dates arrive as ISO strings over JSON, not Date objects. */
 export type LoginInput = {
@@ -85,6 +85,50 @@ export type UpdateLocationInput = Partial<CreateLocationInput>;
 
 export type UpdateRegistrationInput = Partial<CreateRegistrationInput> & {
   status?: RegistrationStatus;
+};
+
+export type PaymentCore = {
+  id: string;
+  name: string;
+  amountPerPerson: number;
+  qrCodeUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreatePaymentCoreDto = {
+  name: string;
+  amountPerPerson: number;
+  qrCodeUrl: string | null;
+  isActive: boolean;
+};
+
+export type PaymentHistory = {
+  id: string;
+  paymentCoreId: string;
+  registrationId: string;
+  amount: number;
+  status: "PENDING" | "PAID" | "FAILED";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdatePaymentCoreDto = {
+  isActive?: boolean;
+};
+
+export type CreatePaymentHistoryDto = {
+  paymentCoreId: string;
+  registrationId: string;
+  amount: number;
+  status: "PENDING" | "PAID" | "FAILED";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdatePaymentHistoryDto = Partial<CreatePaymentHistoryDto> & {
+  status?: "PENDING" | "PAID" | "FAILED";
 };
 
 /**

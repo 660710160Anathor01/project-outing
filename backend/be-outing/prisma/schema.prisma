@@ -53,9 +53,56 @@ model Form {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  paymentHistories PaymentHistory[]
+
   @@index([locationId])
   @@index([status])
   @@index([createdAt])
   @@index([phone])
   @@map("form")
+}
+
+model PaymentCore {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @default("Default Payment")
+  amountPerPerson Int
+  qrCodeUrl       String?
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paymentHistories PaymentHistory[]
+
+  @@index([isActive])
+  @@map("payment_core")
+}
+
+model PaymentHistory {
+  id            String   @id @default(uuid()) @db.Uuid
+
+  formId        String   @db.Uuid
+  paymentCoreId String   @db.Uuid
+
+  amount        Int
+  peopleCount   Int
+
+  slipUrl       String?
+
+  status        String   @default("PENDING")
+  paidAt        DateTime?
+  verifiedAt    DateTime?
+  verifiedBy    String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  form          Form        @relation(fields: [formId], references: [id], onDelete: Cascade)
+  paymentCore   PaymentCore @relation(fields: [paymentCoreId], references: [id])
+
+  @@index([formId])
+  @@index([paymentCoreId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payment_history")
 }
