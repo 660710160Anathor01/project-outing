@@ -9,7 +9,7 @@ import { LocationsModule } from './locations/locations.module';
 import { LoginModule } from './login/login.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RegistrationsModule } from './registrations/registrations.module';
-import { PaymentModule } from './payment/payment.module';
+// import { PaymentModule } from './payment/payment.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,7 +32,7 @@ import { PaymentModule } from './payment/payment.module';
     LocationsModule,
     RegistrationsModule,
     LoginModule,
-    PaymentModule,
+    // PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -1,27 +1,27 @@
-import { Module } from "@nestjs/common";
+// import { Module } from "@nestjs/common";
 
-import { PaymentController } from "./payment.controller";
-import { PaymentService } from "./payment.service";
-import { StorageService } from "./storage.service";
+// import { PaymentController } from "./payment.controller";
+// import { PaymentService } from "./payment.service";
+// import { StorageService } from "./storage.service";
 
-import { PrismaModule } from "../prisma/prisma.module";
+// import { PrismaModule } from "../prisma/prisma.module";
 
-@Module({
-  imports: [
-    PrismaModule,
-  ],
+// @Module({
+//   imports: [
+//     PrismaModule,
+//   ],
 
-  controllers: [
-    PaymentController,
-  ],
+//   controllers: [
+//     PaymentController,
+//   ],
 
-  providers: [
-    PaymentService,
-    StorageService,
-  ],
+//   providers: [
+//     PaymentService,
+//     StorageService,
+//   ],
 
-  exports: [
-    PaymentService,
-  ],
-})
-export class PaymentModule {}
+//   exports: [
+//     PaymentService,
+//   ],
+// })
+// export class PaymentModule {}
