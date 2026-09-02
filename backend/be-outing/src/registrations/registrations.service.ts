@@ -65,6 +65,34 @@ export class RegistrationsService {
     return registration;
   }
 
+  async findByRegistrationNumber(name: string, phone: string) {
+    return this.prisma.form.findFirst({
+      where: {
+        name,
+        phone,
+        status: {
+          not: "CANCELLED",
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  async updateByRegistrationNumber(
+    name: string,
+    phone: string,
+    dto: UpdateRegistrationDto,
+  ) {
+    const registration =
+      await this.findByRegistrationNumber(name, phone);
+  
+    return this.update(registration?.id ?? "", dto);
+  }
+  
+  
+
   async update(id: string, dto: UpdateRegistrationDto) {
     const existing = await this.prisma.form.findUnique({
       where: { id },
@@ -126,6 +154,34 @@ export class RegistrationsService {
       },
     });
   }
+
+  async cancelByRegistrationNumber(
+    name: string,
+    phone: string,
+  ) {
+    const registration = await this.prisma.form.findFirst({
+      where: {
+        name,
+        phone,
+      },
+    });
+  
+    if (!registration) {
+      throw new NotFoundException(
+        "Registration not found",
+      );
+    }
+  
+    return this.prisma.form.update({
+      where: {
+        id: registration.id,
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+  }
+  
 
   async cancel(id: string) {
     const existing = await this.prisma.form.findUnique({
