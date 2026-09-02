@@ -41,11 +41,11 @@ const baseMenuItems: Omit<MenuItem, "badge">[] = [
     href: "/reports",
     icon: BarChart3,
   },
-  {
-    label: "Payment",
-    href: "/manage-payment",
-    icon: CreditCard,
-  },
+  // {
+  //   label: "Payment",
+  //   href: "/manage-payment",
+  //   icon: CreditCard,
+  // },
   {
     label: "Registrations",
     href: "/create",
