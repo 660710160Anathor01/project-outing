@@ -142,7 +142,7 @@ export default function ManageRegistration() {
         });
 
       router.push(
-        `/menage-registration/${registration.id}/payment`,
+        `/menage-registration/${registration?.id}/payment`,
       );
     } catch (error) {
       if (
