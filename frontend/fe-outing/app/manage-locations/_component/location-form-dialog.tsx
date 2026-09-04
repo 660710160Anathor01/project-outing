@@ -16,9 +16,10 @@ export type LocationFormValues = {
   name: string;
   description?: string;
   address: string;
-  beds: number;
-  residentCapacity: number;
-  carparkCapacity: number;
+  beds: string;
+  residentCapacity: string;
+  carparkCapacity: string;
+  price: string;
   mapUrl?: string;
   imageUrl?: string[];
   sourceUrl?: string;
@@ -41,6 +42,7 @@ type FormState = {
   beds: string;
   residentCapacity: string;
   carparkCapacity: string;
+  price: string;
   mapUrl: string;
   imageUrls: string;
   sourceUrl: string;
@@ -55,6 +57,7 @@ const emptyFormState = (): FormState => ({
   beds: "",
   residentCapacity: "",
   carparkCapacity: "",
+  price: "",
   mapUrl: "",
   imageUrls: "",
   sourceUrl: "",
@@ -64,25 +67,14 @@ function locationToFormState(location: Location | null): FormState {
   if (!location) return emptyFormState();
 
   const images = Array.isArray(location.imageUrl) ? location.imageUrl : [];
-
   return {
     name: location.name ?? "",
     description: location.description ?? "",
     address: location.address ?? "",
-    beds:
-      location.beds !== undefined && location.beds !== null
-        ? String(location.beds)
-        : "",
-    residentCapacity:
-      location.residentCapacity !== undefined &&
-      location.residentCapacity !== null
-        ? String(location.residentCapacity)
-        : "",
-    carparkCapacity:
-      location.carparkCapacity !== undefined &&
-      location.carparkCapacity !== null
-        ? String(location.carparkCapacity)
-        : "",
+    beds: location.beds ?? "",
+    residentCapacity: location.residentCapacity ?? "",
+    carparkCapacity: location.carparkCapacity ?? "",
+    price: location.price ?? "",
     mapUrl: location.mapUrl ?? "",
     imageUrls: images.join("\n"),
     sourceUrl: location.sourceUrl ?? "",
@@ -168,9 +160,10 @@ export function LocationFormDialog({
       name: form.name.trim(),
       description: form.description.trim() || undefined,
       address: form.address.trim() || "",
-      beds: Number(form.beds),
-      residentCapacity: Number(form.residentCapacity),
-      carparkCapacity: Number(form.carparkCapacity),
+      beds: String(form.beds),
+      residentCapacity: String(form.residentCapacity),
+      carparkCapacity: String(form.carparkCapacity),
+      price: String(form.price),
       mapUrl: form.mapUrl.trim() || undefined,
       imageUrl: form.imageUrls
         .split("\n")
@@ -266,7 +259,7 @@ export function LocationFormDialog({
               <input
                 id="location-beds"
                 name="beds"
-                type="number"
+                type="text"
                 min={0}
                 value={form.beds}
                 onChange={handleChange}
@@ -288,7 +281,7 @@ export function LocationFormDialog({
               <input
                 id="location-residentCapacity"
                 name="residentCapacity"
-                type="number"
+                type="text"
                 min={0}
                 value={form.residentCapacity}
                 onChange={handleChange}
@@ -312,7 +305,7 @@ export function LocationFormDialog({
               <input
                 id="location-carparkCapacity"
                 name="carparkCapacity"
-                type="number"
+                type="text"
                 min={0}
                 value={form.carparkCapacity}
                 onChange={handleChange}
@@ -322,6 +315,30 @@ export function LocationFormDialog({
               {errors.carparkCapacity && (
                 <p className="text-xs text-red-500">
                   {errors.carparkCapacity}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="location-price"
+                className="text-sm font-medium text-black"
+              >
+                Price<span className="text-red-500"> *</span>
+              </label>
+              <input
+                id="location-price"
+                name="price"
+                type="text"
+                min={0}
+                value={form.price}
+                onChange={handleChange}
+                className="rounded-md border-2 border-gray-300 p-2 text-sm"
+                aria-invalid={Boolean(errors.price)}
+              />
+              {errors.price && (
+                <p className="text-xs text-red-500">
+                  {errors.price}
                 </p>
               )}
             </div>

@@ -1,6 +1,11 @@
-export type RegistrationStatus = "PENDING" | "CONFIRMED" | "PAID" | "CANCELLED";
+export type RegistrationStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "PAID"
+  | "CANCELLED";
 
 /** Dates arrive as ISO strings over JSON, not Date objects. */
+
 export type LoginInput = {
   userName: string;
   pass: string;
@@ -12,79 +17,88 @@ export type LoginResponse = {
   expiresIn: number;
 };
 
-export type Companion = {
-  name: string;
-  phone?: string;
-  relationship?: string;
-};
-
-export type Location = {
-  id: string;
-  name: string;
-  description: string | null;
-  address: string | null;
-  beds: number;
-  residentCapacity: number;
-  carparkCapacity: number;
-  mapUrl: string | null;
-  imageUrl: string | null;
-  sourceUrl: string | null;
-  status: string;
-}
-
-export type Registration = {
-  id: string;
-  name: string;
-  phone: string;
-  lineId: string;
-
-  locationId: string;
-  companions?: CompanionInput[];
-  travelOption: "SELF_DRIVE" | "CAR_SHARE";
-  carShare?: boolean;
-  emptySeats?: number;
-  address?: string;
-  note?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type CompanionInput = {
   name: string;
   phone?: string;
   relationship?: string;
 };
 
+export type Companion = CompanionInput;
+
+export type Location = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string;
+  beds: string;
+  residentCapacity: string;
+  carparkCapacity: string;
+  price: string;
+  mapUrl: string | null;
+  sourceUrl: string | null;
+  imageUrl: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Registration = {
+  id: string;
+  registrationNumber: string;
+
+  name: string;
+  phone: string;
+  lineId: string | null;
+
+  locationId: string;
+  companions: CompanionInput[];
+
+  travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  carShare: boolean;
+  emptySeats: number;
+
+  address: string | null;
+  note: string | null;
+
+  status: RegistrationStatus;
+
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CreateRegistrationInput = {
   name: string;
   phone: string;
-  lineId: string;
+  lineId?: string;
   locationId: string;
   companions?: CompanionInput[];
-  travelOption: "SELF_DRIVE" | "CAR_SHARE";
+  travelOption?: "SELF_DRIVE" | "CAR_SHARE";
   address?: string;
   carShare?: boolean;
   emptySeats?: number;
   note?: string;
 };
 
+export type UpdateRegistrationInput =
+  Partial<CreateRegistrationInput> & {
+    status?: RegistrationStatus;
+  };
+
 export type CreateLocationInput = {
   name: string;
   description?: string;
   address: string;
-  beds: number;
-  residentCapacity: number;
-  carparkCapacity: number;
+  beds: string;
+  residentCapacity: string;
+  carparkCapacity: string;
+  price: string;
   mapUrl?: string;
   sourceUrl?: string;
   imageUrl?: string[];
 };
 
-
-export type UpdateLocationInput = Partial<CreateLocationInput>;
-
-export type UpdateRegistrationInput = Partial<CreateRegistrationInput> & {
-  status?: RegistrationStatus;
+export type UpdateLocationInput = Partial<CreateLocationInput> & {
+  status?: string;
 };
 
 export type PaymentCore = {
@@ -97,39 +111,61 @@ export type PaymentCore = {
   updatedAt: string;
 };
 
-export type CreatePaymentCoreDto = {
+export type CreatePaymentCoreInput = {
   name: string;
   amountPerPerson: number;
-  qrCodeUrl: string | null;
-  isActive: boolean;
-};
-
-export type PaymentHistory = {
-  id: string;
-  paymentCoreId: string;
-  registrationId: string;
-  amount: number;
-  status: "PENDING" | "PAID" | "FAILED";
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type UpdatePaymentCoreDto = {
+  qrCodeUrl?: string | null;
   isActive?: boolean;
 };
 
-export type CreatePaymentHistoryDto = {
+export type UpdatePaymentCoreInput = {
+  name?: string;
+  amountPerPerson?: number;
+  qrCodeUrl?: string | null;
+  isActive?: boolean;
+};
+
+export type PaymentHistoryStatus =
+  | "PENDING"
+  | "PAID"
+  | "FAILED";
+
+export type PaymentHistory = {
+  id: string;
+
+  formId: string;
   paymentCoreId: string;
-  registrationId: string;
+
   amount: number;
-  status: "PENDING" | "PAID" | "FAILED";
+  peopleCount: number;
+
+  slipUrl: string | null;
+
+  status: PaymentHistoryStatus;
+
+  paidAt: string | null;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+
   createdAt: string;
   updatedAt: string;
 };
 
-export type UpdatePaymentHistoryDto = Partial<CreatePaymentHistoryDto> & {
-  status?: "PENDING" | "PAID" | "FAILED";
+export type CreatePaymentHistoryInput = {
+  formId: string;
+  paymentCoreId: string;
+  amount: number;
+  peopleCount: number;
+  slipUrl?: string | null;
+  status?: PaymentHistoryStatus;
 };
+
+export type UpdatePaymentHistoryInput =
+  Partial<CreatePaymentHistoryInput> & {
+    paidAt?: string | null;
+    verifiedAt?: string | null;
+    verifiedBy?: string | null;
+  };
 
 /**
  * Carries the whole Nest error body. `messages` is always an array because
