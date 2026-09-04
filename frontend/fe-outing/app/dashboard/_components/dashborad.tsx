@@ -25,8 +25,11 @@ import {
   CardContent,
 } from "../../../src/_component/card-template";
 
-import { Registration } from "@/src/_lib/api/registration-type";
-import { Location } from "@/src/_lib/api/registration-type";
+import {
+  Registration,
+  Location,
+} from "@/src/_lib/api/registration-type";
+
 import Loading from "../../loading";
 import { Button } from "@/src/_component/button";
 
@@ -82,6 +85,24 @@ const emptyFilter = (): Filter => ({
   location: "",
   search: "",
 });
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+/**
+ * รองรับกรณี API ส่ง carparkCapacity มาเป็น
+ * number หรือ string
+ */
+const toNumber = (
+  value: number | string | null | undefined,
+): number => {
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue)
+    ? numberValue
+    : 0;
+};
 
 /* =========================================================
    KPI CARD
@@ -149,9 +170,21 @@ function VotedLocation({
 
   const hasVotes = Boolean(topLocation);
 
+  const parkingCapacity =
+    toNumber(topLocationCarparkCapacity);
+
   const parkingFull =
-    topLocationCarparkCapacity > 0 &&
-    topLocationCars >= topLocationCarparkCapacity;
+    parkingCapacity > 0 &&
+    topLocationCars >= parkingCapacity;
+
+  const parkingPercentage =
+    parkingCapacity > 0
+      ? Math.min(
+          (topLocationCars / parkingCapacity) *
+            100,
+          100,
+        )
+      : 0;
 
   return (
     <Card className="h-full">
@@ -180,8 +213,8 @@ function VotedLocation({
             </p>
 
             <p className="mt-1 text-xs text-muted">
-              Location distribution will appear
-              here once registrations are received.
+              Location distribution will appear here
+              once registrations are received.
             </p>
           </div>
         ) : (
@@ -241,8 +274,7 @@ function VotedLocation({
                       : "text-success"
                   }`}
                 >
-                  {topLocationCars} /{" "}
-                  {topLocationCarparkCapacity}
+                  {topLocationCars} / {parkingCapacity}
                 </span>
               </div>
 
@@ -258,15 +290,7 @@ function VotedLocation({
                       : "bg-success"
                   }`}
                   style={{
-                    width:
-                      topLocationCarparkCapacity > 0
-                        ? `${Math.min(
-                            (topLocationCars /
-                              topLocationCarparkCapacity) *
-                              100,
-                            100,
-                          )}%`
-                        : "0%",
+                    width: `${parkingPercentage}%`,
                   }}
                 />
               </div>
@@ -528,16 +552,13 @@ function RegistrationFilter({
             >
               <option value="">All</option>
 
-              {Object.entries(
-                locationMapping ?? {},
-              ).map(([key, value]) => (
-                <option
-                  key={key}
-                  value={key}
-                >
-                  {value}
-                </option>
-              ))}
+              {Object.entries(locationMapping).map(
+                ([key, value]) => (
+                  <option key={key} value={key}>
+                    {value}
+                  </option>
+                ),
+              )}
             </select>
           </div>
 
@@ -659,151 +680,129 @@ function RegistrationTable({
                   colSpan={10}
                   className="px-4 text-center text-sm text-muted"
                 >
-                  No registrations match
-                  your filters.
+                  No registrations match your filters.
                 </td>
               </tr>
             ) : (
-              registrations.map(
-                (registration) => (
-                  <tr
-                    key={registration.id}
-                    className="h-16 border-b border-line last:border-0 hover:bg-surface/40"
-                  >
-                    {/* Name */}
-                    <td className="h-16 max-w-0 px-3 py-2 align-middle">
-                      <div
-                        className="truncate text-sm font-medium"
-                        title={
-                          registration.name ??
-                          ""
-                        }
-                      >
-                        {registration.name ??
-                          "-"}
-                      </div>
-                    </td>
+              registrations.map((registration) => (
+                <tr
+                  key={registration.id}
+                  className="h-16 border-b border-line last:border-0 hover:bg-surface/40"
+                >
+                  {/* Name */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm font-medium"
+                      title={registration.name ?? ""}
+                    >
+                      {registration.name ?? "-"}
+                    </div>
+                  </td>
 
-                    {/* Phone */}
-                    <td className="h-16 max-w-0 px-3 py-2 align-middle">
-                      <div
-                        className="truncate text-sm"
-                        title={
-                          registration.phone ??
-                          ""
-                        }
-                      >
-                        {registration.phone ??
-                          "-"}
-                      </div>
-                    </td>
+                  {/* Phone */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm"
+                      title={registration.phone ?? ""}
+                    >
+                      {registration.phone ?? "-"}
+                    </div>
+                  </td>
 
-                    {/* Line ID */}
-                    <td className="h-16 max-w-0 px-3 py-2 align-middle">
-                      <div
-                        className="truncate text-sm"
-                        title={
-                          registration.lineId ??
-                          ""
-                        }
-                      >
-                        {registration.lineId ??
-                          "-"}
-                      </div>
-                    </td>
+                  {/* Line ID */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm"
+                      title={registration.lineId ?? ""}
+                    >
+                      {registration.lineId ?? "-"}
+                    </div>
+                  </td>
 
-                    {/* Location */}
-                    <td className="h-16 max-w-0 px-3 py-2 align-middle">
-                      <div
-                        className="truncate text-sm"
-                        title={
-                          locationMapping[
-                            registration
-                              .locationId
-                          ] ?? ""
-                        }
-                      >
-                        {locationMapping[
-                          registration
-                            .locationId
-                        ] ?? "-"}
-                      </div>
-                    </td>
+                  {/* Location */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    <div
+                      className="truncate text-sm"
+                      title={
+                        locationMapping[
+                          registration.locationId
+                        ] ?? ""
+                      }
+                    >
+                      {locationMapping[
+                        registration.locationId
+                      ] ?? "-"}
+                    </div>
+                  </td>
 
-                    {/* Travel */}
-                    <td className="h-16 px-3 py-2 align-middle">
-                      <span className="whitespace-nowrap text-sm">
-                        {TravelOptionMapping[
-                          registration
-                            .travelOption
-                        ] ?? "-"}
+                  {/* Travel */}
+                  <td className="h-16 px-3 py-2 align-middle">
+                    <span className="whitespace-nowrap text-sm">
+                      {TravelOptionMapping[
+                        registration.travelOption
+                      ] ?? "-"}
+                    </span>
+                  </td>
+
+                  {/* Can take others */}
+                  <td className="h-16 px-3 py-2 text-right align-middle">
+                    <span
+                      className={
+                        registration.carShare
+                          ? "font-medium text-accent"
+                          : "text-muted"
+                      }
+                    >
+                      {registration.carShare
+                        ? "Yes"
+                        : "No"}
+                    </span>
+                  </td>
+
+                  {/* Empty seats */}
+                  <td className="h-16 px-3 py-2 text-right align-middle text-sm">
+                    {registration.emptySeats ?? "-"}
+                  </td>
+
+                  {/* Companions */}
+                  <td className="h-16 px-3 py-2 text-right align-middle text-sm">
+                    {registration.companions?.length ?? 0}
+                  </td>
+
+                  {/* Note */}
+                  <td className="h-16 max-w-0 px-3 py-2 align-middle">
+                    {registration.note ? (
+                      <p
+                        className="line-clamp-2 text-sm leading-5 text-muted"
+                        title={registration.note}
+                      >
+                        {registration.note}
+                      </p>
+                    ) : (
+                      <span className="text-sm text-muted">
+                        -
                       </span>
-                    </td>
+                    )}
+                  </td>
 
-                    {/* Can take others */}
-                    <td className="h-16 px-3 py-2 text-right align-middle">
-                      <span
-                        className={
-                          registration.carShare
-                            ? "font-medium text-accent"
-                            : "text-muted"
-                        }
-                      >
-                        {registration.carShare
-                          ? "Yes"
-                          : "No"}
-                      </span>
-                    </td>
-
-                    {/* Empty seats */}
-                    <td className="h-16 px-3 py-2 text-right align-middle text-sm">
-                      {registration.emptySeats ??
-                        "-"}
-                    </td>
-
-                    {/* Companions */}
-                    <td className="h-16 px-3 py-2 text-right align-middle text-sm">
-                      {registration.companions
-                        ?.length ?? 0}
-                    </td>
-
-                    {/* Note */}
-                    <td className="h-16 max-w-0 px-3 py-2 align-middle">
-                      {registration.note ? (
-                        <p
-                          className="line-clamp-2 text-sm leading-5 text-muted"
-                          title={
-                            registration.note
-                          }
-                        >
-                          {registration.note}
-                        </p>
-                      ) : (
-                        <span className="text-sm text-muted">
-                          -
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="h-16 px-3 py-2 align-middle">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full whitespace-nowrap"
-                        onClick={() => {
-                          router.push(
-                            `/detail/${registration.id}`,
-                          );
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </Button>
-                    </td>
-                  </tr>
-                ),
-              )
+                  {/* Actions */}
+                  <td className="h-16 px-3 py-2 align-middle">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full whitespace-nowrap"
+                      onClick={() => {
+                        router.push(
+                          `/detail/${registration.id}`,
+                        );
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -832,16 +831,13 @@ function SentFormDialog({
 
       <DialogContent className="gap-4 p-6 text-card-foreground">
         <DialogHeader>
-          <DialogTitle>
-            Copy Form URL
-          </DialogTitle>
+          <DialogTitle>Copy Form URL</DialogTitle>
         </DialogHeader>
 
         <DialogDescription className="flex flex-row items-center gap-2">
           <p className="flex-1 text-sm text-muted">
             Form URL:{" "}
-            {typeof window !==
-            "undefined"
+            {typeof window !== "undefined"
               ? `${window.location.origin}/create`
               : "/create"}
           </p>
@@ -879,8 +875,7 @@ export function Dashboard() {
     error,
   } = useQuery<Registration[]>({
     queryKey: ["registrations"],
-    queryFn: () =>
-      getAllRegistrations(),
+    queryFn: () => getAllRegistrations(),
   });
 
   /* =======================================================
@@ -905,8 +900,7 @@ export function Dashboard() {
       () =>
         locations.reduce(
           (acc, location) => {
-            acc[location.id] =
-              location.name;
+            acc[location.id] = location.name;
 
             return acc;
           },
@@ -921,6 +915,10 @@ export function Dashboard() {
 
   const filteredRegistrations =
     useMemo(() => {
+      const searchTerm = filter.search
+        .trim()
+        .toLowerCase();
+
       return registrations.filter(
         (registration) => {
           /* Travel Option */
@@ -935,20 +933,14 @@ export function Dashboard() {
           /* Location */
           if (
             filter.location &&
-            String(
-              registration.locationId,
-            ) !== filter.location
+            String(registration.locationId) !==
+              filter.location
           ) {
             return false;
           }
 
           /* Search */
-          if (filter.search.trim()) {
-            const term =
-              filter.search
-                .trim()
-                .toLowerCase();
-
+          if (searchTerm) {
             const haystack = [
               registration.name,
               registration.phone,
@@ -958,9 +950,7 @@ export function Dashboard() {
               .join(" ")
               .toLowerCase();
 
-            if (
-              !haystack.includes(term)
-            ) {
+            if (!haystack.includes(searchTerm)) {
               return false;
             }
           }
@@ -968,10 +958,7 @@ export function Dashboard() {
           return true;
         },
       );
-    }, [
-      registrations,
-      filter,
-    ]);
+    }, [registrations, filter]);
 
   /* =======================================================
      DASHBOARD DATA
@@ -979,7 +966,7 @@ export function Dashboard() {
 
   const dashboardData = useMemo(() => {
     /*
-     * Registered
+     * Registered employees
      */
     const employees =
       filteredRegistrations.length;
@@ -991,8 +978,7 @@ export function Dashboard() {
       filteredRegistrations.reduce(
         (sum, registration) =>
           sum +
-          (registration.companions
-            ?.length ?? 0),
+          (registration.companions?.length ?? 0),
         0,
       );
 
@@ -1005,8 +991,7 @@ export function Dashboard() {
     /*
      * Cars
      *
-     * This is the SAME value displayed
-     * in the Cars KPI.
+     * จำนวน registration ที่เลือก SELF_DRIVE
      */
     const totalCars =
       filteredRegistrations.filter(
@@ -1027,6 +1012,8 @@ export function Dashboard() {
 
     /*
      * Available seats
+     *
+     * รวม emptySeats จากคนที่ขับรถเอง
      */
     const availableSeats =
       filteredRegistrations
@@ -1038,8 +1025,7 @@ export function Dashboard() {
         .reduce(
           (sum, registration) =>
             sum +
-            (registration.emptySeats ??
-              0),
+            toNumber(registration.emptySeats),
           0,
         );
 
@@ -1059,17 +1045,11 @@ export function Dashboard() {
 
     filteredRegistrations.forEach(
       (registration) => {
-        const id =
-          registration.locationId;
+        const id = String(
+          registration.locationId,
+        );
 
-        const location =
-          locations.find(
-            (item) =>
-              item.id === id,
-          );
-
-        const current =
-          locationMap.get(id);
+        const current = locationMap.get(id);
 
         if (current) {
           current.count += 1;
@@ -1079,7 +1059,7 @@ export function Dashboard() {
         locationMap.set(id, {
           id,
           name:
-            location?.name ??
+            locationMapping[id] ??
             "Unknown Location",
           count: 1,
         });
@@ -1090,9 +1070,7 @@ export function Dashboard() {
       filteredRegistrations.length;
 
     const locationVotes: LocationVote[] =
-      Array.from(
-        locationMap.values(),
-      )
+      Array.from(locationMap.values())
         .map((location) => ({
           id: location.id,
           name: location.name,
@@ -1118,30 +1096,42 @@ export function Dashboard() {
     const topLocation =
       locationVotes[0];
 
+    /*
+     * Capacity ของ location อันดับ 1
+     */
     const topLocationData =
       topLocation
         ? locations.find(
             (location) =>
-              location.id ===
-              topLocation.id,
+              String(location.id) ===
+              String(topLocation.id),
           )
         : undefined;
+
+    const topLocationCarparkCapacity =
+      toNumber(
+        topLocationData?.carparkCapacity,
+      );
 
     /*
      * IMPORTANT:
      *
-     * Parking uses the SAME Cars value
-     * from the Cars KPI above.
+     * นับเฉพาะรถ SELF_DRIVE
+     * ที่มาจาก TOP LOCATION
      *
-     * Do NOT count SELF_DRIVE again
-     * by topLocation.locationId.
+     * ไม่ใช่ totalCars ของทุก location
      */
     const topLocationCars =
-      totalCars;
-
-    const topLocationCarparkCapacity =
-      topLocationData?.carparkCapacity ??
-      0;
+      topLocation
+        ? filteredRegistrations.filter(
+            (registration) =>
+              String(
+                registration.locationId,
+              ) === String(topLocation.id) &&
+              registration.travelOption ===
+                "SELF_DRIVE",
+          ).length
+        : 0;
 
     return {
       employees,
@@ -1157,6 +1147,7 @@ export function Dashboard() {
   }, [
     filteredRegistrations,
     locations,
+    locationMapping,
   ]);
 
   /* =======================================================
@@ -1185,8 +1176,7 @@ export function Dashboard() {
   if (locationsError) {
     return (
       <div className="rounded-xl border border-line bg-card p-6 text-danger">
-        Error:{" "}
-        {locationsError.message}
+        Error: {locationsError.message}
       </div>
     );
   }
@@ -1198,18 +1188,27 @@ export function Dashboard() {
   const pendingLocations =
     locations.filter(
       (location) =>
-        location.status ===
-        "PENDING",
+        location.status === "PENDING",
     ).length;
 
   /* =======================================================
      SEND FORM
   ======================================================= */
 
-  const handleSentForm = () => {
-    window.navigator.clipboard.writeText(
-      `${window.location.origin}/create`,
-    );
+  const handleSentForm = async () => {
+    const url =
+      `${window.location.origin}/create`;
+
+    try {
+      await window.navigator.clipboard.writeText(
+        url,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to copy form URL:",
+        error,
+      );
+    }
   };
 
   /* =======================================================
@@ -1219,7 +1218,6 @@ export function Dashboard() {
   return (
     <div className="min-h-full bg-card p-4 text-card-foreground sm:p-6">
       <div className="mx-auto w-full max-w-[1600px]">
-
         {/* =================================================
             HEADER
         ================================================= */}
@@ -1260,8 +1258,7 @@ export function Dashboard() {
 
               Manage Locations
 
-              {pendingLocations >
-                0 && (
+              {pendingLocations > 0 && (
                 <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">
                   {pendingLocations}
                 </span>
@@ -1287,7 +1284,7 @@ export function Dashboard() {
             value={
               dashboardData.employees
             }
-            description={`reply from employees`}
+            description="reply from employees"
             icon={Users}
           />
 
