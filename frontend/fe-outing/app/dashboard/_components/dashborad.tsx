@@ -1332,7 +1332,7 @@ export function Dashboard() {
               dashboardData.locationVotes
             }
             topLocationCars={
-              dashboardData.topLocationCars
+              dashboardData.totalCars
             }
             topLocationCarparkCapacity={
               dashboardData.topLocationCarparkCapacity

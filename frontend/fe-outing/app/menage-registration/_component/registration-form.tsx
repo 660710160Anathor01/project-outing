@@ -156,11 +156,14 @@ function validateForm(form: RegistrationFormData): FormErrors {
   }
 
   const trimmedName = form.name.trim();
+  const words = trimmedName.split(/\s+/);
 
   if (!trimmedName) {
     errors.name = "Name is required";
   } else if (trimmedName.length < 2 || trimmedName.length > 120) {
     errors.name = "Name must be between 2 and 120 characters";
+  } else if (words.length < 2) {
+    errors.name = "Please enter your first and last name";
   }
 
   if (!form.phone.trim()) {
