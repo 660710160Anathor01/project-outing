@@ -329,16 +329,15 @@ export default function RegistrationForm() {
         value: location.id,
         label: location.name,
         description:
-          location.description ?? "",
+        location.description ?? "",
         mapUrl: location.mapUrl ?? "",
         imageUrl: location.imageUrl ?? "",
         sourceUrl: location.sourceUrl ?? "",
         address: location.address ?? "",
-        beds: location.beds,
-        residentCapacity:
-          location.residentCapacity,
-        carparkCapacity:
-          location.carparkCapacity,
+        beds: location.beds ?? "",
+        residentCapacity: location.residentCapacity ?? "",
+        carparkCapacity: location.carparkCapacity ?? "",
+        price: location.price ?? "",
       })) ?? [];
 
   const validateAndSetField = useCallback(

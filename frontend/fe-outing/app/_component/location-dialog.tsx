@@ -20,6 +20,7 @@ import {
   Pencil,
   Trash2,
   Users,
+  Banknote,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -342,27 +343,35 @@ function StatTile({
 function LocationStats({ location }: { location: Location }) {
   const stats: { icon: LucideIcon; label: string; value: string }[] = [];
 
-  if (location.beds > 0) {
+  if (location.beds !== undefined && location.beds !== null) {
     stats.push({
       icon: BedDouble,
-      label: "Bed rooms",
-      value: pluralize(location.beds, "bed rooms"),
+      label: "Bed room",
+      value: `${location.beds} bed room`,
     });
   }
 
-  if (location.residentCapacity > 0) {
+  if (location.residentCapacity !== undefined && location.residentCapacity !== null) {
     stats.push({
       icon: Users,
       label: "Guest capacity",
-      value: `Up to ${pluralize(location.residentCapacity, "guest")}`,
+      value: `Up to ${pluralize(Number(location.residentCapacity), "guest")}`,
     });
   }
 
-  if (location.carparkCapacity > 0) {
+  if (location.carparkCapacity !== undefined && location.carparkCapacity !== null) {
     stats.push({
       icon: Car,
       label: "Car park",
-      value: pluralize(location.carparkCapacity, "car park", "car parks"),
+      value: pluralize(Number(location.carparkCapacity), "car park", "car parks"),
+    });
+  }
+
+  if (location.price !== undefined && location.price !== null) {
+    stats.push({
+      icon: Banknote,
+      label: "Price",
+      value: `THB ${location.price}`,
     });
   }
 

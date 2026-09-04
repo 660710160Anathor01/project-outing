@@ -159,14 +159,15 @@ export type RadioCardOption = {
   value: string;
   label: string;
   description?: string;
-  beds?: number;
-  residentCapacity?: number;
-  carparkCapacity?: number;
+  beds?: string;
+  residentCapacity?: string;
+  carparkCapacity?: string;
+  price?: string;
   address?: string;
   icon?: IconComponent;
   // New, for the image-card style (room/venue picker, etc.)
   mapUrl?: string;
-  imageUrl?: string;
+  imageUrl?: string[];
   sourceUrl?: string;
   badge?: string; // e.g. "Available now"
   meta?: string; // e.g. "Max. 15 seats  |  10 m2"
@@ -344,14 +345,17 @@ function toLocation(option: RadioCardOption): Location {
     id: option.value,
     name: option.label,
     description: option.description ?? null,
-    address: option.address ?? null,
-    beds: option.beds ?? 0,
-    residentCapacity: option.residentCapacity ?? 0,
-    carparkCapacity: option.carparkCapacity ?? 0,
-    mapUrl: option.mapUrl ?? null,
-    imageUrl: option.imageUrl ?? null,
-    sourceUrl: option.sourceUrl ?? null,
+    address: option.address ?? "",
+    beds: option.beds ?? "",
+    residentCapacity: option.residentCapacity ?? "",
+    carparkCapacity: option.carparkCapacity ?? "",
+    price: option.price ?? "",
+    mapUrl: option.mapUrl ?? "",
+    imageUrl: option.imageUrl ?? [],
+    sourceUrl: option.sourceUrl ?? "",
     status: option.status ?? "PENDING",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 

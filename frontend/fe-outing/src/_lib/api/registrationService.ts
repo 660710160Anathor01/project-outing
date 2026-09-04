@@ -1,13 +1,13 @@
 import {
   ApiError,
   CreateLocationInput,
-  CreatePaymentCoreDto,
-  CreatePaymentHistoryDto,
+  CreatePaymentCoreInput,
+  CreatePaymentHistoryInput,
   PaymentCore,
   PaymentHistory,
   UpdateLocationInput,
-  UpdatePaymentCoreDto,
-  UpdatePaymentHistoryDto,
+  UpdatePaymentCoreInput,
+  UpdatePaymentHistoryInput,
 } from "./registration-type";
 
 import {
@@ -52,16 +52,16 @@ function buildRegistrationBody<
 
 function buildPaymentCoreBody<
   T extends
-    | CreatePaymentCoreDto
-    | UpdatePaymentCoreDto
+    | CreatePaymentCoreInput
+    | UpdatePaymentCoreInput
 >(input: T): T {
   return compact(input);
 }
 
 function buildPaymentHistoryBody<
   T extends
-    | CreatePaymentHistoryDto
-    | UpdatePaymentHistoryDto
+    | CreatePaymentHistoryInput
+    | UpdatePaymentHistoryInput
 >(input: T): T {
   return compact(input);
 }
@@ -306,7 +306,7 @@ export function getPaymentCores(
 }
 
 export function createPaymentCore(
-  input: CreatePaymentCoreDto,
+  input: CreatePaymentCoreInput,
   signal?: AbortSignal,
 ) {
   return request<PaymentCore>(
@@ -321,7 +321,7 @@ export function createPaymentCore(
 
 export function updatePaymentCore(
   id: string,
-  input: UpdatePaymentCoreDto,
+  input: UpdatePaymentCoreInput,
   signal?: AbortSignal,
 ) {
   return request<PaymentCore>(
@@ -358,7 +358,7 @@ export function getPaymentHistory(
 }
 
 export function createPaymentHistory(
-  input: CreatePaymentHistoryDto,
+  input: CreatePaymentHistoryInput,
   signal?: AbortSignal,
 ) {
   return request<PaymentHistory>(
@@ -373,7 +373,7 @@ export function createPaymentHistory(
 
 export function updatePaymentHistory(
   id: string,
-  input: UpdatePaymentHistoryDto,
+  input: UpdatePaymentHistoryInput,
   signal?: AbortSignal,
 ) {
   return request<PaymentHistory>(

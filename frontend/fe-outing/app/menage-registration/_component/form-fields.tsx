@@ -1,6 +1,11 @@
 "use client";
 
-import { AlertCircle, Check, Maximize2, type LucideIcon } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  Maximize2,
+  type LucideIcon,
+} from "lucide-react";
 import {
   type InputHTMLAttributes,
   type ReactNode,
@@ -9,13 +14,22 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
+
 import { LocationDetailDialog } from "../../_component/location-dialog";
-import { Location } from "@/src/_lib/api/registration-type";
+import type { Location } from "@/src/_lib/api/registration-type";
 
 const inputBase =
   "w-full rounded-[10px] border bg-white text-[15px] text-card-foreground placeholder:text-muted/70 transition-shadow focus:outline-none";
-const inputDefault = `${inputBase} border-line focus:border-brand focus:ring-4 focus:ring-brand/15`;
-const inputError = `${inputBase} border-danger focus:border-danger focus:ring-4 focus:ring-danger/15`;
+
+const inputDefault =
+  `${inputBase} border-line focus:border-brand focus:ring-4 focus:ring-brand/15`;
+
+const inputError =
+  `${inputBase} border-danger focus:border-danger focus:ring-4 focus:ring-danger/15`;
+
+// -----------------------------------------------------------------------------
+// Field
+// -----------------------------------------------------------------------------
 
 type FieldProps = {
   id: string;
@@ -42,37 +56,59 @@ export function Field({
   const errorId = useId();
 
   const describedBy =
-    [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(" ") ||
-    undefined;
+    [hint ? hintId : null, error ? errorId : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label htmlFor={id} className="text-sm font-medium text-card-foreground">
+      <label
+        htmlFor={id}
+        className="text-sm font-medium text-card-foreground"
+      >
         {label}
+
         {required && (
           <>
-            <span aria-hidden="true" className="ml-0.5 text-danger">
+            <span
+              aria-hidden="true"
+              className="ml-0.5 text-danger"
+            >
               *
             </span>
+
             <span className="sr-only"> (required)</span>
           </>
         )}
+
         {optional && (
           <span className="ml-1.5 text-sm font-normal text-muted">
             Optional
           </span>
         )}
       </label>
+
       {hint && (
         <p id={hintId} className="text-sm text-muted">
           {hint}
         </p>
       )}
+
       {children(describedBy)}
-      {error && <FieldError id={errorId} message={error} />}
+
+      {error && (
+        <FieldError
+          id={errorId}
+          message={error}
+        />
+      )}
     </div>
   );
 }
+
+// -----------------------------------------------------------------------------
+// Text Input
+// -----------------------------------------------------------------------------
 
 type TextInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -99,16 +135,25 @@ export function TextInput({
           strokeWidth={2}
         />
       )}
+
       <input
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`h-11 ${error ? inputError : inputDefault} ${Icon ? "pl-10 pr-3.5" : "px-3.5"}`}
+        className={`h-11 ${
+          error ? inputError : inputDefault
+        } ${
+          Icon ? "pl-10 pr-3.5" : "px-3.5"
+        }`}
         {...props}
       />
     </div>
   );
 }
+
+// -----------------------------------------------------------------------------
+// Text Area
+// -----------------------------------------------------------------------------
 
 type TextAreaProps = Omit<
   TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -129,13 +174,25 @@ export function TextArea({
       id={id}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy}
-      className={`min-h-[88px] resize-y px-3.5 py-2.5 ${error ? inputError : inputDefault}`}
+      className={`min-h-[88px] resize-y px-3.5 py-2.5 ${
+        error ? inputError : inputDefault
+      }`}
       {...props}
     />
   );
 }
 
-export function FieldError({ id, message }: { id?: string; message: string }) {
+// -----------------------------------------------------------------------------
+// Field Error
+// -----------------------------------------------------------------------------
+
+export function FieldError({
+  id,
+  message,
+}: {
+  id?: string;
+  message: string;
+}) {
   return (
     <p
       id={id}
@@ -147,30 +204,40 @@ export function FieldError({ id, message }: { id?: string; message: string }) {
         aria-hidden="true"
         strokeWidth={2}
       />
+
       <span>{message}</span>
     </p>
   );
 }
 
-// Keep whatever you already have for this one — only shown here so the file
-// is self-contained. Adjust the path to match your project.
+// -----------------------------------------------------------------------------
+// Radio Card
+// -----------------------------------------------------------------------------
+
 type IconComponent = LucideIcon;
+
 export type RadioCardOption = {
   value: string;
   label: string;
   description?: string;
-  beds?: number;
-  residentCapacity?: number;
-  carparkCapacity?: number;
+
+  beds?: string;
+  residentCapacity?: string;
+  carparkCapacity?: string;
+  price?: string;
+
   address?: string;
   icon?: IconComponent;
-  // New, for the image-card style (room/venue picker, etc.)
+
   mapUrl?: string;
-  imageUrl?: string;
+  imageUrl?: string[];
   sourceUrl?: string;
-  badge?: string; // e.g. "Available now"
-  meta?: string; // e.g. "Max. 15 seats  |  10 m2"
-  amenities?: IconComponent[]; // small icons over the image, e.g. [Camera, Bluetooth]
+
+  badge?: string;
+  meta?: string;
+
+  amenities?: IconComponent[];
+
   status?: "PENDING" | "APPROVED";
 };
 
@@ -207,11 +274,16 @@ export function RadioCardGroup({
     >
       <legend className="mb-1 text-sm font-medium text-card-foreground">
         {legend}
+
         {required && (
           <>
-            <span aria-hidden="true" className="ml-0.5 text-danger">
+            <span
+              aria-hidden="true"
+              className="ml-0.5 text-danger"
+            >
               *
             </span>
+
             <span className="sr-only"> (required)</span>
           </>
         )}
@@ -219,14 +291,17 @@ export function RadioCardGroup({
 
       <div
         className={`${
-          horizontal ? "flex flex-row flex-wrap gap-3" : "grid grid-cols-1 gap-3"
+          horizontal
+            ? "flex flex-row flex-wrap gap-3"
+            : "grid grid-cols-1 gap-3"
         } ${className}`}
       >
         {options.map((option) => {
           const inputId = `${name}-${option.value}`;
           const checked = value === option.value;
 
-          return option.imageUrl ? (
+          return option.imageUrl &&
+            option.imageUrl.length > 0 ? (
             <ImageRadioCard
               key={option.value}
               inputId={inputId}
@@ -251,13 +326,20 @@ export function RadioCardGroup({
         })}
       </div>
 
-      {error && <FieldError id={errorId} message={error} />}
+      {error && (
+        <FieldError
+          id={errorId}
+          message={error}
+        />
+      )}
     </fieldset>
   );
 }
 
-// Your original card, unchanged in behavior — just pulled out into its own
-// component so RadioCardGroup can pick between this and ImageRadioCard.
+// -----------------------------------------------------------------------------
+// Icon Radio Card
+// -----------------------------------------------------------------------------
+
 function IconRadioCard({
   inputId,
   name,
@@ -281,7 +363,7 @@ function IconRadioCard({
     <label
       htmlFor={inputId}
       className={`relative flex ${
-        horizontal ? "flex-row " : "flex-col"
+        horizontal ? "flex-row" : "flex-col"
       } cursor-pointer items-start gap-3 rounded-[10px] border p-4 transition-colors ${
         checked
           ? "border-brand bg-brand/5"
@@ -298,6 +380,7 @@ function IconRadioCard({
         className="peer sr-only"
         required={required}
       />
+
       {Icon && (
         <div>
           {horizontal ? (
@@ -309,22 +392,32 @@ function IconRadioCard({
           ) : (
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                checked ? "bg-brand/10 text-brand" : "bg-surface text-muted"
+                checked
+                  ? "bg-brand/10 text-brand"
+                  : "bg-surface text-muted"
               }`}
             >
-              <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+              <Icon
+                className="h-[18px] w-[18px]"
+                strokeWidth={2}
+              />
             </span>
           )}
         </div>
       )}
+
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
         <span className="text-sm font-medium text-card-foreground">
           {option.label}
         </span>
+
         {option.description && (
-          <span className="text-sm text-muted">{option.description}</span>
+          <span className="text-sm text-muted">
+            {option.description}
+          </span>
         )}
       </span>
+
       {checked && (
         <Check
           className="absolute right-3 top-3 h-4 w-4 text-brand"
@@ -332,28 +425,49 @@ function IconRadioCard({
           strokeWidth={2.5}
         />
       )}
+
       <span className="pointer-events-none absolute inset-0 rounded-[10px] ring-2 ring-transparent peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
     </label>
   );
 }
 
-// New: the room-card style from the screenshot — image on top with a badge
-// and amenity icons overlaid, then title / meta / a view-details trigger below.
+// -----------------------------------------------------------------------------
+// Convert RadioCardOption -> Location
+// -----------------------------------------------------------------------------
+
 function toLocation(option: RadioCardOption): Location {
   return {
     id: option.value,
     name: option.label,
+
     description: option.description ?? null,
-    address: option.address ?? null,
-    beds: option.beds ?? 0,
-    residentCapacity: option.residentCapacity ?? 0,
-    carparkCapacity: option.carparkCapacity ?? 0,
+    address: option.address ?? "",
+
+    beds: option.beds ?? "0",
+    residentCapacity: option.residentCapacity ?? "0",
+    carparkCapacity: option.carparkCapacity ?? "0",
+
+    // IMPORTANT:
+    // Keep price from API / RadioCardOption.
+    // Do not let it become undefined.
+    price: option.price ?? "0",
+
     mapUrl: option.mapUrl ?? null,
-    imageUrl: option.imageUrl ?? null,
     sourceUrl: option.sourceUrl ?? null,
+    imageUrl: Array.isArray(option.imageUrl)
+      ? option.imageUrl
+      : [],
+
     status: option.status ?? "PENDING",
+
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
+
+// -----------------------------------------------------------------------------
+// Image Radio Card
+// -----------------------------------------------------------------------------
 
 function ImageRadioCard({
   inputId,
@@ -371,6 +485,7 @@ function ImageRadioCard({
   onChange: (value: string) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+
   const location = toLocation(option);
 
   return (
@@ -398,7 +513,9 @@ function ImageRadioCard({
 
         {/* Image */}
         <div className="relative h-32 w-full shrink-0 bg-surface">
-          {option.imageUrl ? (
+          {option.imageUrl &&
+          option.imageUrl.length > 0 &&
+          option.imageUrl[0] ? (
             <Image
               src={option.imageUrl[0]}
               alt={option.label}
@@ -418,22 +535,25 @@ function ImageRadioCard({
             </span>
           )}
 
-          {option.amenities && option.amenities.length > 0 && (
-            <div className="absolute bottom-2 left-2 flex gap-1.5">
-              {option.amenities.map((Amenity, index) => (
-                <span
-                  key={index}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm"
-                >
-                  <Amenity
-                    className="h-3.5 w-3.5"
-                    aria-hidden="true"
-                    strokeWidth={2}
-                  />
-                </span>
-              ))}
-            </div>
-          )}
+          {option.amenities &&
+            option.amenities.length > 0 && (
+              <div className="absolute bottom-2 left-2 flex gap-1.5">
+                {option.amenities.map(
+                  (Amenity, index) => (
+                    <span
+                      key={index}
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm"
+                    >
+                      <Amenity
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                        strokeWidth={2}
+                      />
+                    </span>
+                  ),
+                )}
+              </div>
+            )}
 
           {checked && (
             <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-sm">
@@ -470,6 +590,7 @@ function ImageRadioCard({
         <span className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-transparent peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
       </label>
 
+      {/* View details */}
       <div className="px-3 pb-3">
         <button
           type="button"
@@ -480,12 +601,22 @@ function ImageRadioCard({
               : "bg-brand/10 text-brand hover:bg-brand/15"
           }`}
         >
-          <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
+          <Maximize2
+            className="h-3.5 w-3.5"
+            aria-hidden="true"
+            strokeWidth={2}
+          />
+
           View details
-          <span className="sr-only"> for {option.label}</span>
+
+          <span className="sr-only">
+            {" "}
+            for {option.label}
+          </span>
         </button>
       </div>
 
+      {/* Location Detail Dialog */}
       <LocationDetailDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -498,7 +629,9 @@ function ImageRadioCard({
   );
 }
 
-
+// -----------------------------------------------------------------------------
+// Form Section
+// -----------------------------------------------------------------------------
 
 export function FormSection({
   title,
@@ -512,17 +645,33 @@ export function FormSection({
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-base font-semibold text-card-foreground">{title}</h2>
+        <h2 className="text-base font-semibold text-card-foreground">
+          {title}
+        </h2>
+
         {description && (
-          <p className="mt-0.5 text-sm text-muted">{description}</p>
+          <p className="mt-0.5 text-sm text-muted">
+            {description}
+          </p>
         )}
       </div>
-      <div className="flex flex-col gap-4">{children}</div>
+
+      <div className="flex flex-col gap-4">
+        {children}
+      </div>
     </section>
   );
 }
 
-export function ErrorSummary({ errors }: { errors: string[] }) {
+// -----------------------------------------------------------------------------
+// Error Summary
+// -----------------------------------------------------------------------------
+
+export function ErrorSummary({
+  errors,
+}: {
+  errors: string[];
+}) {
   if (errors.length === 0) return null;
 
   return (
@@ -532,9 +681,14 @@ export function ErrorSummary({ errors }: { errors: string[] }) {
       className="rounded-[10px] border border-danger/30 bg-red-50 p-4"
     >
       <p className="flex items-center gap-2 text-sm font-medium text-danger">
-        <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <AlertCircle
+          className="h-4 w-4 shrink-0"
+          aria-hidden="true"
+        />
+
         Please fix the following before submitting:
       </p>
+
       <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-danger">
         {errors.map((message) => (
           <li key={message}>{message}</li>
