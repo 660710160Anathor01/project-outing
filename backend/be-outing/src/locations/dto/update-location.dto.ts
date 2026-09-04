@@ -2,13 +2,12 @@ import { Transform } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   MaxLength,
-  Min,
 } from "class-validator";
 import {
   trim,
@@ -36,23 +35,38 @@ export class UpdateLocationDto {
   @MaxLength(500)
   address?: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => String(value))
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  beds?: number;
+  @IsString()
+  @Matches(/^\d+$/, {
+    message: "beds must be a non-negative integer",
+  })
+  beds?: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => String(value))
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  residentCapacity?: number;
+  @IsString()
+  @Matches(/^\d+$/, {
+    message: "residentCapacity must be a non-negative integer",
+  })
+  residentCapacity?: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => String(value))
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  carparkCapacity?: number;
+  @IsString()
+  @Matches(/^\d+$/, {
+    message: "carparkCapacity must be a non-negative integer",
+  })
+  carparkCapacity?: string;
+
+  @Transform(({ value }) => String(value))
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: "price is required" })
+  @Matches(/^\d+(\.\d+)?$/, {
+    message: "price must be a valid number",
+  })
+  price?: string;
 
   @Transform(({ value }) => trimToUndefined(value))
   @IsOptional()
@@ -72,6 +86,7 @@ export class UpdateLocationDto {
   @IsString({ each: true })
   imageUrl?: string[];
 
+  @Transform(({ value }) => trimToUndefined(value))
   @IsOptional()
   @IsString()
   @MaxLength(100)

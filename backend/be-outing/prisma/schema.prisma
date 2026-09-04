@@ -23,16 +23,16 @@ model Location {
   name             String   @unique
   description      String?
   address          String
-  beds             Int      @default(0)
-  residentCapacity Int      @default(0)
-  carparkCapacity  Int      @default(0)
+  beds             String      @default("0")
+  residentCapacity String      @default("0")
+  carparkCapacity  String      @default("0")
+  price            String      @default("0")
   mapUrl           String?
   sourceUrl        String?
-  imageUrl         String[]
-  status           String   @default("PENDING")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
+  imageUrl         String[]   @default([])
+  status           String     @default("PENDING")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }
 
 
